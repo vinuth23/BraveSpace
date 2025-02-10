@@ -6,147 +6,157 @@ class NotificationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: Column(
+      backgroundColor: const Color(0xFFF0F0F0),
+      body: Stack(
         children: [
-          // Filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                FilterChip(
-                  label: const Text('All'),
-                  selected: true,
-                  onSelected: (bool selected) {},
-                  backgroundColor: Colors.cyan.shade100,
-                  selectedColor: Colors.cyan.shade200,
-                  showCheckmark: false,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          // Curved background
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 200,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.cyan.shade200,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: Row(
-                    children: [
-                      Icon(Icons.vrpano, size: 16, color: Colors.grey.shade700),
-                      const SizedBox(width: 4),
-                      const Text('Sessions'),
-                    ],
-                  ),
-                  selected: false,
-                  onSelected: (bool selected) {},
-                  backgroundColor: Colors.grey.shade200,
-                  showCheckmark: false,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: Row(
-                    children: [
-                      Icon(Icons.track_changes,
-                          size: 16, color: Colors.grey.shade700),
-                      const SizedBox(width: 4),
-                      const Text('Goals'),
-                    ],
-                  ),
-                  selected: false,
-                  onSelected: (bool selected) {},
-                  backgroundColor: Colors.grey.shade200,
-                  showCheckmark: false,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: Row(
-                    children: [
-                      Icon(Icons.description,
-                          size: 16, color: Colors.grey.shade700),
-                      const SizedBox(width: 4),
-                      const Text('Report'),
-                    ],
-                  ),
-                  selected: false,
-                  onSelected: (bool selected) {},
-                  backgroundColor: Colors.grey.shade200,
-                  showCheckmark: false,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          // Notification list
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+          // Content
+          SafeArea(
+            child: Column(
               children: [
-                _NotificationItem(
-                  icon: Icons.vrpano,
-                  title: 'Upcoming session in 30 mins',
-                  time: '10 mins ago',
+                // App Bar
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Text(
+                        'Notifications',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                _NotificationItem(
-                  icon: Icons.track_changes,
-                  title: 'Daily Challenge - 20 Points collected',
-                  time: '12 mins ago',
+                // Filter chips
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      FilterChip(
+                        label: const Text('All'),
+                        selected: true,
+                        onSelected: (bool selected) {},
+                        backgroundColor: Colors.cyan.shade100,
+                        selectedColor: Colors.cyan.shade200,
+                        showCheckmark: false,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: Row(
+                          children: [
+                            Icon(Icons.vrpano,
+                                size: 16, color: Colors.grey.shade700),
+                            const SizedBox(width: 4),
+                            const Text('Sessions'),
+                          ],
+                        ),
+                        selected: false,
+                        onSelected: (bool selected) {},
+                        backgroundColor: Colors.grey.shade200,
+                        showCheckmark: false,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: Row(
+                          children: [
+                            Icon(Icons.track_changes,
+                                size: 16, color: Colors.grey.shade700),
+                            const SizedBox(width: 4),
+                            const Text('Goals'),
+                          ],
+                        ),
+                        selected: false,
+                        onSelected: (bool selected) {},
+                        backgroundColor: Colors.grey.shade200,
+                        showCheckmark: false,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: Row(
+                          children: [
+                            Icon(Icons.description,
+                                size: 16, color: Colors.grey.shade700),
+                            const SizedBox(width: 4),
+                            const Text('Report'),
+                          ],
+                        ),
+                        selected: false,
+                        onSelected: (bool selected) {},
+                        backgroundColor: Colors.grey.shade200,
+                        showCheckmark: false,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                    ],
+                  ),
                 ),
-                _NotificationItem(
-                  icon: Icons.vrpano,
-                  title: 'Upcoming session in 4 hours',
-                  time: '20 mins ago',
-                ),
-                _NotificationItem(
-                  icon: Icons.description,
-                  title: 'Your weekly report received',
-                  time: '2 hrs ago',
-                ),
-                _NotificationItem(
-                  icon: Icons.update,
-                  title: 'Daily Tasks - Activity updated',
-                  time: '3 hrs ago',
+                const SizedBox(height: 16),
+                // Notification list
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      _NotificationItem(
+                        icon: Icons.vrpano,
+                        title: 'Upcoming session in 30 mins',
+                        time: '10 mins ago',
+                      ),
+                      _NotificationItem(
+                        icon: Icons.track_changes,
+                        title: 'Daily Challenge - 20 Points collected',
+                        time: '12 mins ago',
+                      ),
+                      _NotificationItem(
+                        icon: Icons.vrpano,
+                        title: 'Upcoming session in 4 hours',
+                        time: '20 mins ago',
+                      ),
+                      _NotificationItem(
+                        icon: Icons.description,
+                        title: 'Your weekly report received',
+                        time: '2 hrs ago',
+                      ),
+                      _NotificationItem(
+                        icon: Icons.update,
+                        title: 'Daily Tasks - Activity updated',
+                        time: '3 hrs ago',
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 1,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.notifications), label: 'Notifications'),
-          BottomNavigationBarItem(icon: Icon(Icons.vrpano), label: 'VR'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.access_time), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pop(context);
-          }
-        },
       ),
     );
   }

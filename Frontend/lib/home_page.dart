@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'vr_sessions_page.dart';
+import 'notifications_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -7,157 +8,151 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.cyan.shade50,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with greeting and profile
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      backgroundColor: const Color(0xFFF0F0F0),
+      body: Stack(
+        children: [
+          // Curved background - increased height
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 350, // Increased from 200 to 350 to extend further down
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.cyan.shade200,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Header with greeting and profile
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Hello, Senithu 👋',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hello, Senithu 👋',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.settings_outlined),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.all(12),
+                        ),
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.settings_outlined),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.all(12),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              // Search Bar
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
+                  // Search Bar
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 25),
+                  const SizedBox(height: 25),
 
-              // Daily Challenges Section
-              Text(
-                'Daily Challenges',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 15),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ChallengeCard(
-                      title: 'VR\nSessions',
-                      subtitle: '1 of 2',
-                      onTap: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: _ChallengeCard(
-                      title: 'Hours in\nVR',
-                      subtitle: '1 of 4 hrs',
-                      onTap: () {},
-                      color: Colors.white,
-                      textColor: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 25),
-
-              // Upcoming Sessions Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                  // Daily Challenges Section
                   Text(
-                    'Upcoming Sessions',
+                    'Daily Challenges',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  TextButton(
-                    onPressed: () {},
-                    child: Row(
-                      children: [
-                        const Text('See all'),
-                        const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_ios, size: 14),
-                      ],
-                    ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ChallengeCard(
+                          title: 'VR\nSessions',
+                          subtitle: '1 of 2',
+                          onTap: () {},
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: _ChallengeCard(
+                          title: 'Hours in\nVR',
+                          subtitle: '1 of 4 hrs',
+                          onTap: () {},
+                          color: Colors.white,
+                          textColor: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+
+                  // Upcoming Sessions Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Upcoming Sessions',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: Row(
+                          children: [
+                            const Text('See all'),
+                            const SizedBox(width: 4),
+                            Icon(Icons.arrow_forward_ios, size: 14),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  _SessionCard(
+                    title: 'Presentation',
+                    duration: '1 Hour',
+                    time: 'Morning 9am',
+                    onTap: () {},
+                    color: Colors.cyan.shade200,
+                  ),
+                  const SizedBox(height: 15),
+                  _SessionCard(
+                    title: 'Speaking Session',
+                    duration: '15 min',
+                    time: 'Evening 3pm',
+                    onTap: () {},
+                    color: Colors.white,
                   ),
                 ],
               ),
-              const SizedBox(height: 15),
-              _SessionCard(
-                title: 'Presentation',
-                duration: '1 Hour',
-                time: 'Morning 9am',
-                onTap: () {},
-                color: Colors.cyan.shade200,
-              ),
-              const SizedBox(height: 15),
-              _SessionCard(
-                title: 'Speaking Session',
-                duration: '15 min',
-                time: 'Evening 3pm',
-                onTap: () {},
-                color: Colors.white,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.notifications), label: 'Notifications'),
-          BottomNavigationBarItem(icon: Icon(Icons.vrpano), label: 'VR'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.access_time), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        onTap: (index) {
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const NotificationsPage()),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const VRSessionsPage()),
-            );
-          }
-        },
       ),
     );
   }
@@ -299,22 +294,6 @@ class _SessionCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class NotificationsPage extends StatelessWidget {
-  const NotificationsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-      ),
-      body: const Center(
-        child: Text('Notifications Page'),
       ),
     );
   }

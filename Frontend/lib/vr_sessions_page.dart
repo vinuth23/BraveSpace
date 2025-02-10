@@ -8,100 +8,111 @@ class VRSessionsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.cyan.shade50,
-      appBar: AppBar(
-        backgroundColor: Colors.cyan.shade50,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black),
-          onPressed: () {},
-        ),
-        title: const Text(
-          'VR sessions',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _SessionCard(
-              image: 'assets/images/beginner.webp',
-              title: 'Beginner',
-              subtitle: '14 Days . 6 days per week',
-              onTap: () {},
-            ),
-            const SizedBox(height: 16),
-            _SessionCard(
-              image: 'assets/images/intermediate.jpeg',
-              title: 'Intermediate',
-              subtitle: '28 Days . 2-4 days per week',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const VRSessionDetailsPage(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _SessionCard(
-              image: 'assets/images/advanced.jpg',
-              title: 'Advanced',
-              subtitle: '28 Days . 6-7 days per week',
-              onTap: () {},
-            ),
-            const SizedBox(height: 24),
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.cyan,
-                side: BorderSide(color: Colors.cyan.shade300),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+      backgroundColor: const Color(0xFFF0F0F0),
+      body: Stack(
+        children: [
+          // Curved background
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 200,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.cyan.shade200,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
               ),
-              child: const Text('Customize VR Activities'),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 2,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.notifications), label: 'Notifications'),
-          BottomNavigationBarItem(icon: Icon(Icons.vrpano), label: 'VR'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.access_time), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ),
+          // Content
+          SafeArea(
+            child: Column(
+              children: [
+                // App Bar
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.menu, color: Colors.black),
+                        onPressed: () {},
+                      ),
+                      const Text(
+                        'VR sessions',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined,
+                            color: Colors.black),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ),
+                // Session cards
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _SessionCard(
+                          image: 'assets/images/beginner.webp',
+                          title: 'Beginner',
+                          subtitle: '14 Days . 6 days per week',
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 16),
+                        _SessionCard(
+                          image: 'assets/images/intermediate.jpeg',
+                          title: 'Intermediate',
+                          subtitle: '28 Days . 2-4 days per week',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const VRSessionDetailsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _SessionCard(
+                          image: 'assets/images/advanced.jpg',
+                          title: 'Advanced',
+                          subtitle: '28 Days . 6-7 days per week',
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 24),
+                        OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.cyan,
+                            side: BorderSide(color: Colors.cyan.shade300),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          child: const Text('Customize VR Activities'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pop(context);
-          } else if (index == 1) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const NotificationsPage()),
-            );
-          }
-        },
       ),
     );
   }
