@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import 'notifications_page.dart';
+import 'vr_sessions_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,8 +19,99 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.cyan.shade50,
       ),
-      home: const HomePage(),
+      home: const MainNavigator(),
     );
+  }
+}
+
+class MainNavigator extends StatefulWidget {
+  const MainNavigator({super.key});
+
+  @override
+  State<MainNavigator> createState() => _MainNavigatorState();
+}
+
+class _MainNavigatorState extends State<MainNavigator> {
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = [
+    const HomePage(),
+    const NotificationsPage(),
+    const VRSessionsPage(),
+    const Center(child: Text('Progress Page')),
+    const Center(child: Text('Profile Page')),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: _pages[_currentIndex],
+      extendBody: true,
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildNavItem(Icons.home_outlined, 0),
+            _buildNavItem(Icons.notifications_outlined, 1),
+            _buildCenterVRButton(),
+            _buildNavItem(Icons.schedule_outlined, 3),
+            _buildNavItem(Icons.person_outline, 4),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index) {
+    final isSelected = _currentIndex == index;
+    return IconButton(
+      icon: Icon(
+        icon,
+        color: isSelected ? Colors.cyan.shade200 : Colors.grey,
+        size: 24,
+      ),
+      onPressed: () => _onItemTapped(index),
+    );
+  }
+
+  Widget _buildCenterVRButton() {
+    final isSelected = _currentIndex == 2;
+    return GestureDetector(
+      onTap: () => _onItemTapped(2),
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.cyan.shade200 : Colors.grey.shade200,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.vrpano,
+          color: isSelected ? Colors.white : Colors.black,
+          size: 24,
+        ),
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 }
 
