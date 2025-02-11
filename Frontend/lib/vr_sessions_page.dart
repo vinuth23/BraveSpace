@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'vr_session_details_page.dart';
-import 'notifications_page.dart';
+//import 'notifications_page.dart';
 
 class VRSessionsPage extends StatelessWidget {
   const VRSessionsPage({super.key});
