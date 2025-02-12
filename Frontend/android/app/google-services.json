@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "929652701026",
+    "project_id": "bravespace-cba91",
+    "storage_bucket": "bravespace-cba91.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:929652701026:android:1a6b22350a53f09bf2de3b",
+        "android_client_info": {
+          "package_name": "android.intent.action.PROCESS_TEXT"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrxKroL3cS7apKh9GSAssxUNtQBnqSXa8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:929652701026:android:09dc7927bf4fd564f2de3b",
+        "android_client_info": {
+          "package_name": "android.permission.INTERNET"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrxKroL3cS7apKh9GSAssxUNtQBnqSXa8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
