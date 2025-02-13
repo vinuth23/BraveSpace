@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'activity_history_page.dart';
+import 'goals_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -6,18 +8,22 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),  
       body: Stack(
         children: [
           // Background bubble
           Positioned(
-            top: -100,
-            left: -100,
-            right: -100,
+            top: 0,
+            left: 0,
+            right: 0,
             child: Container(
-              height: 300,
+              height: 250,
               decoration: BoxDecoration(
                 color: Colors.cyan.shade200,
-                shape: BoxShape.circle,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
               ),
             ),
           ),
@@ -190,12 +196,26 @@ class ProfilePage extends StatelessWidget {
                     _buildMenuItem(
                       icon: Icons.history_outlined,
                       title: 'Session history',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ActivityHistoryPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildMenuItem(
                       icon: Icons.track_changes_outlined,
                       title: 'Goals',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const GoalsPage(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 
