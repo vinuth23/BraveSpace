@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'vr_sessions_page.dart';
-import 'notifications_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
