@@ -1,9 +1,17 @@
-dependencies{
-    id("com.google.gms.google-services") version "4.4.2" apply false
+buildscript {
+    repositories {
+        google()  // Ensure this repository is included
+        mavenCentral()
+    }
+    dependencies {
+        // Add Google Services classpath
+        classpath 'com.google.gms:google-services:4.3.15'  // Updated version
+    }
 }
+
 allprojects {
     repositories {
-        google()
+        google()  // Ensure this repository is included
         mavenCentral()
     }
 }

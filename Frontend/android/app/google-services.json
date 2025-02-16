@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "929652701026",
-    "project_id": "bravespace-cba91",
-    "storage_bucket": "bravespace-cba91.firebasestorage.app"
+    "project_number": "140673586178",
+    "project_id": "bravespace-af950",
+    "storage_bucket": "bravespace-af950.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:929652701026:android:1a6b22350a53f09bf2de3b",
+        "mobilesdk_app_id": "1:140673586178:android:bc11cc5bedd71553fc431b",
         "android_client_info": {
-          "package_name": "android.intent.action.PROCESS_TEXT"
+          "package_name": "com.bravespace.vrtherapy"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCrxKroL3cS7apKh9GSAssxUNtQBnqSXa8"
+          "current_key": "AIzaSyBhkFZxUxZAggsNbenDyJWez2X3qDVjCHc"
         }
       ],
       "services": {
@@ -26,15 +26,34 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:929652701026:android:09dc7927bf4fd564f2de3b",
+        "mobilesdk_app_id": "1:140673586178:android:ba1573c1f86eb32efc431b",
         "android_client_info": {
-          "package_name": "android.permission.INTERNET"
+          "package_name": "com.example.flutter_application_1"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCrxKroL3cS7apKh9GSAssxUNtQBnqSXa8"
+          "current_key": "AIzaSyBhkFZxUxZAggsNbenDyJWez2X3qDVjCHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:140673586178:android:1790b33daeb54173fc431b",
+        "android_client_info": {
+          "package_name": "com.example.proj"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhkFZxUxZAggsNbenDyJWez2X3qDVjCHc"
         }
       ],
       "services": {
