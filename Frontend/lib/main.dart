@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'notifications_page.dart';
 import 'vr_sessions_page.dart';
+import 'profile_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,7 +40,7 @@ class _MainNavigatorState extends State<MainNavigator> {
     const NotificationsPage(),
     const VRSessionsPage(),
     const Center(child: Text('Progress Page')),
-    const Center(child: Text('Profile Page')),
+    const ProfilePage(),
   ];
 
   @override
