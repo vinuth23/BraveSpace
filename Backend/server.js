@@ -16,6 +16,39 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+// Middleware to verify the ID token
+function verifyToken(req, res, next) {
+  const idToken = req.headers.authorization; // Get token from the Authorization header
+
+  if (!idToken) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  admin
+    .auth()
+    .verifyIdToken(idToken)
+    .then((decodedToken) => {
+      req.user = decodedToken; // Store decoded user info in the request object
+      next(); // Call the next middleware/route handler
+    })
+    .catch((error) => {
+      console.error("Error verifying ID token:", error);
+      return res.status(401).json({ error: "Invalid token" });
+    });
+}
+
+// Protect the /profile route
+app.get("/profile", verifyToken, (req, res) => {
+  const userId = req.user.uid; // Get the authenticated user's UID
+
+  // Fetch user data from the database (you can use Firebase Firestore or any database)
+  // For simplicity, let's just send back the UID
+  res.json({
+    message: `Hello, user with UID: ${userId}`,
+  });
+});
+
+
 // User Sign-Up (Create a new user with email and password)
 app.post("/signup", async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
