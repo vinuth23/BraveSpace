@@ -18,16 +18,29 @@ admin.initializeApp({
 
 // User Sign-Up (Create a new user with email and password)
 app.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, firstName, lastName } = req.body;
+
+  if (!email || !password || !firstName || !lastName) {
+    return res.status(400).send({ error: "All fields are required!" });
+  }
 
   try {
     const userRecord = await admin.auth().createUser({
       email,
       password,
+      displayName: `${firstName} ${lastName}`
+    });
+    const db = admin.firestore();
+    await db.collection("users").doc(userRecord.uid).set({
+      firstName,
+      lastName,
+      email,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
     res.status(201).send({
       message: "User created successfully!",
       uid: userRecord.uid,
+      fullName: `${firstName} ${lastName}`
     });
   } catch (error) {
     res.status(400).send({ error: error.message });
