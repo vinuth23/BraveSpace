@@ -8,12 +8,14 @@ environment:
   sdk: ^3.6.2
 
 dependencies:
+  cloud_firestore: ^5.5.0
+  http: ^1.1.0
   flutter:
     sdk: flutter
 
-  # Firebase dependencies (add these for Firebase)
-  firebase_core: ^2.10.0 # This is needed to initialize Firebase
-  firebase_auth: ^4.0.0  # Add other Firebase dependencies as per your app's requirements
+  # Updated Firebase dependencies
+  firebase_core: ^3.9.0  # Latest stable version
+  firebase_auth: ^5.3.4  # Latest stable version that works with core 2.24.2
 
   cupertino_icons: ^1.0.8
 

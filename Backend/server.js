@@ -2,12 +2,14 @@
 const admin = require("firebase-admin");
 const express = require("express");
 const bodyParser = require("body-parser");
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
 
 // Middleware to parse JSON request bodies
 app.use(bodyParser.json());
+app.use(cors());
 
 // Firebase Admin SDK initialization
 const serviceAccount = require("./serviceAccountKey.json");
@@ -95,11 +97,32 @@ app.post("/signin", async (req, res) => {
   }
 });
 
+// Add this new endpoint for token verification
+app.post("/verifyToken", async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    return res.status(400).json({ error: "No token provided" });
+  }
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    res.json({
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      message: "Token verified successfully"
+    });
+  } catch (error) {
+    console.error("Error verifying token:", error);
+    res.status(401).json({ error: "Invalid token" });
+  }
+});
+
 // Test endpoint
 app.get("/", (req, res) => {
   res.send("BraveSpace Backend is working!");
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.listen(3000, '0.0.0.0', () => {
+  console.log('Server running on http://0.0.0.0:3000');
 });
