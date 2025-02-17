@@ -29,124 +29,135 @@ class HomePage extends StatelessWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header with greeting and profile
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height - 40,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      // Header with greeting and profile
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Hello, Senithu 👋',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hello, Senithu 👋',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.settings_outlined),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.all(12),
+                            ),
                           ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.settings_outlined),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.all(12),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                  // Search Bar
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
+                      // Search Bar
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search',
+                          prefixIcon: const Icon(Icons.search),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
+                      const SizedBox(height: 25),
 
-                  // Daily Challenges Section
-                  Text(
-                    'Daily Challenges',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _ChallengeCard(
-                          title: 'VR\nSessions',
-                          subtitle: '1 of 2',
-                          onTap: () {},
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _ChallengeCard(
-                          title: 'Hours in\nVR',
-                          subtitle: '1 of 4 hrs',
-                          onTap: () {},
-                          color: Colors.white,
-                          textColor: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-
-                  // Upcoming Sessions Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                      // Daily Challenges Section
                       Text(
-                        'Upcoming Sessions',
+                        'Daily Challenges',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
-                      TextButton(
-                        onPressed: () {},
-                        child: Row(
-                          children: [
-                            const Text('See all'),
-                            const SizedBox(width: 4),
-                            Icon(Icons.arrow_forward_ios, size: 14),
-                          ],
-                        ),
+                      const SizedBox(height: 15),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ChallengeCard(
+                              title: 'VR\nSessions',
+                              subtitle: '1 of 2',
+                              onTap: () {},
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: _ChallengeCard(
+                              title: 'Hours in\nVR',
+                              subtitle: '1 of 4 hrs',
+                              onTap: () {},
+                              color: Colors.white,
+                              textColor: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+
+                      // Upcoming Sessions Section
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Upcoming Sessions',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          TextButton(
+                            onPressed: () {},
+                            child: Row(
+                              children: [
+                                const Text('See all'),
+                                const SizedBox(width: 4),
+                                Icon(Icons.arrow_forward_ios, size: 14),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      _SessionCard(
+                        title: 'Presentation',
+                        duration: '1 Hour',
+                        time: 'Morning 9am',
+                        onTap: () {},
+                        color: Colors.cyan.shade200,
+                      ),
+                      const SizedBox(height: 15),
+                      _SessionCard(
+                        title: 'Speaking Session',
+                        duration: '15 min',
+                        time: 'Evening 3pm',
+                        onTap: () {},
+                        color: Colors.white,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15),
-                  _SessionCard(
-                    title: 'Presentation',
-                    duration: '1 Hour',
-                    time: 'Morning 9am',
-                    onTap: () {},
-                    color: Colors.cyan.shade200,
-                  ),
-                  const SizedBox(height: 15),
-                  _SessionCard(
-                    title: 'Speaking Session',
-                    duration: '15 min',
-                    time: 'Evening 3pm',
-                    onTap: () {},
-                    color: Colors.white,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

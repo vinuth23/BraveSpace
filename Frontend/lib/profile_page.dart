@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
 import 'activity_history_page.dart';
 import 'goals_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
+  Future<void> _signOut(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      // No need to navigate manually, AuthGate will handle it
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error signing out')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),  
+      backgroundColor: const Color(0xFFF5F5F5),
       body: Stack(
         children: [
           // Background bubble
@@ -27,7 +39,6 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-          
           // Main content
           SafeArea(
             child: SingleChildScrollView(
@@ -150,7 +161,8 @@ class ProfilePage extends StatelessWidget {
                                     ),
                                     Text(
                                       '20',
-                                      style: TextStyle(fontWeight: FontWeight.w500),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
@@ -165,7 +177,8 @@ class ProfilePage extends StatelessWidget {
                                     ),
                                     Text(
                                       '20 hours',
-                                      style: TextStyle(fontWeight: FontWeight.w500),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
@@ -223,7 +236,7 @@ class ProfilePage extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () {},
+                        onPressed: () => _signOut(context),
                         icon: const Icon(Icons.logout),
                         label: const Text('Log out'),
                         style: OutlinedButton.styleFrom(
@@ -272,4 +285,4 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
-} 
+}
