@@ -20,7 +20,7 @@ admin.initializeApp({
 
 // Middleware to verify the ID token
 function verifyToken(req, res, next) {
-  const idToken = req.headers.authorization; // Get token from the Authorization header
+  const idToken = req.headers.authorization?.split('Bearer ')[1];
 
   if (!idToken) {
     return res.status(401).json({ error: "No token provided" });
@@ -30,12 +30,12 @@ function verifyToken(req, res, next) {
     .auth()
     .verifyIdToken(idToken)
     .then((decodedToken) => {
-      req.user = decodedToken; // Store decoded user info in the request object
-      next(); // Call the next middleware/route handler
+      req.user = decodedToken;
+      next();
     })
     .catch((error) => {
-      console.error("Error verifying ID token:", error);
-      return res.status(401).json({ error: "Invalid token" });
+      console.error("Error verifying token:", error);
+      res.status(401).json({ error: "Invalid token" });
     });
 }
 
@@ -97,30 +97,70 @@ app.post("/signin", async (req, res) => {
   }
 });
 
-// Add this new endpoint for token verification
+// Update the verifyToken endpoint
 app.post("/verifyToken", async (req, res) => {
+  console.log('📝 Received verifyToken request');
   const { idToken } = req.body;
 
   if (!idToken) {
+    console.log('❌ No token provided in request');
     return res.status(400).json({ error: "No token provided" });
   }
 
   try {
+    console.log('🔍 Verifying token...');
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    res.json({
+    console.log('✅ Token verified for user:', decodedToken.uid);
+    
+    // Get user data from Firestore
+    const db = admin.firestore();
+    console.log('📚 Fetching user data from Firestore...');
+    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+    
+    const response = {
       uid: decodedToken.uid,
       email: decodedToken.email,
+      userData: userDoc.data(),
       message: "Token verified successfully"
-    });
+    };
+    
+    console.log('✨ Sending successful response');
+    res.json(response);
   } catch (error) {
-    console.error("Error verifying token:", error);
-    res.status(401).json({ error: "Invalid token" });
+    console.error("❌ Error verifying token:", error);
+    res.status(401).json({ error: error.message });
   }
+});
+
+// Example of using the middleware to protect routes
+app.get("/protected-route", verifyToken, (req, res) => {
+  res.json({ 
+    message: "This is a protected route",
+    user: req.user 
+  });
 });
 
 // Test endpoint
 app.get("/", (req, res) => {
   res.send("BraveSpace Backend is working!");
+});
+
+// Add this new test endpoint
+app.get("/test-auth", verifyToken, (req, res) => {
+  res.json({
+    message: "You are authenticated!",
+    user: {
+      uid: req.user.uid,
+      email: req.user.email,
+      name: req.user.name
+    }
+  });
+});
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  console.error('❌ Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(3000, '0.0.0.0', () => {
