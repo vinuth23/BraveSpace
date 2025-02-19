@@ -53,31 +53,36 @@ app.get("/profile", verifyToken, (req, res) => {
 
 // User Sign-Up (Create a new user with email and password)
 app.post("/signup", async (req, res) => {
-  const { email, password, firstName, lastName } = req.body;
+  const { uid, email, password, firstName, lastName } = req.body;
 
-  if (!email || !password || !firstName || !lastName) {
+  if (!uid || !email || !firstName || !lastName) {
+    console.log('❌ Missing required fields:', { uid, email, firstName, lastName });
     return res.status(400).send({ error: "All fields are required!" });
   }
 
   try {
-    const userRecord = await admin.auth().createUser({
-      email,
-      password,
-      displayName: `${firstName} ${lastName}`
-    });
+    console.log('📝 Creating initial user data...');
     const db = admin.firestore();
-    await db.collection("users").doc(userRecord.uid).set({
+    
+    // Use the Firebase Auth UID
+    await db.collection('users').doc(uid).set({
       firstName,
       lastName,
       email,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
+    
+    // Create challenges and sessions with the same UID
+    await createInitialUserData(uid);
+    console.log('✅ Initial data created successfully');
+
     res.status(201).send({
-      message: "User created successfully!",
-      uid: userRecord.uid,
+      message: "User data created successfully!",
+      uid: uid,
       fullName: `${firstName} ${lastName}`
     });
   } catch (error) {
+    console.error('❌ Error during signup:', error);
     res.status(400).send({ error: error.message });
   }
 });
@@ -162,6 +167,77 @@ app.use((err, req, res, next) => {
   console.error('❌ Server error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
+
+// Add these functions to create initial data
+
+async function createUserChallenges(userId) {
+  console.log('📝 Starting to create challenges for user:', userId);
+  const challengesRef = admin.firestore().collection('challenges');
+  
+  try {
+    const challenge1 = await challengesRef.add({
+      userId: userId,
+      type: 'VR_SESSIONS',
+      title: 'VR\nSessions',
+      current: 0,
+      target: 2,
+      date: admin.firestore.Timestamp.now()
+    });
+    console.log('✅ Created VR Sessions challenge:', challenge1.id);
+
+    const challenge2 = await challengesRef.add({
+      userId: userId,
+      type: 'VR_HOURS',
+      title: 'Hours in\nVR',
+      current: 0,
+      target: 4,
+      date: admin.firestore.Timestamp.now()
+    });
+    console.log('✅ Created Hours in VR challenge:', challenge2.id);
+    
+    console.log('✅ All challenges created successfully');
+  } catch (error) {
+    console.error('❌ Error creating challenges:', error);
+    throw error;
+  }
+}
+
+async function createInitialUserData(userId) {
+  const db = admin.firestore();
+  
+  console.log('📝 Creating challenges for user:', userId);
+  await createUserChallenges(userId);
+  
+  console.log('📝 Creating sample sessions...');
+  const sessionsRef = db.collection('sessions');
+  const now = admin.firestore.Timestamp.now();
+  
+  try {
+    const session1 = await sessionsRef.add({
+      userId: userId,
+      title: 'Presentation Practice',
+      duration: '1 Hour',
+      startTime: admin.firestore.Timestamp.fromDate(
+        new Date(now.toDate().getTime() + 2 * 60 * 60 * 1000)
+      ),
+    });
+    console.log('✅ Created session 1:', session1.id);
+    
+    const session2 = await sessionsRef.add({
+      userId: userId,
+      title: 'Speaking Session',
+      duration: '30 min',
+      startTime: admin.firestore.Timestamp.fromDate(
+        new Date(now.toDate().getTime() + 4 * 60 * 60 * 1000)
+      ),
+    });
+    console.log('✅ Created session 2:', session2.id);
+    console.log('✅ Sample sessions created successfully');
+  } catch (error) {
+    console.error('❌ Error creating sessions:', error);
+    throw error;
+  }
+}
 
 app.listen(3000, '0.0.0.0', () => {
   console.log('Server running on http://0.0.0.0:3000');

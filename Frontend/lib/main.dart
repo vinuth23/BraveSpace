@@ -11,6 +11,8 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'login_page.dart'; // No need to import since it's in the same file
 
+export 'main.dart' show MainNavigatorState;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Initialize Firebase before running the app.
@@ -63,10 +65,10 @@ class MainNavigator extends StatefulWidget {
   const MainNavigator({super.key});
 
   @override
-  State<MainNavigator> createState() => _MainNavigatorState();
+  State<MainNavigator> createState() => MainNavigatorState();
 }
 
-class _MainNavigatorState extends State<MainNavigator> {
+class MainNavigatorState extends State<MainNavigator> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
@@ -116,22 +118,22 @@ class _MainNavigatorState extends State<MainNavigator> {
     return IconButton(
       icon: Icon(
         icon,
-        color: isSelected ? Colors.cyan.shade200 : Colors.grey,
+        color: isSelected ? const Color(0xFF48CAE4) : Colors.grey,
         size: 24,
       ),
-      onPressed: () => _onItemTapped(index),
+      onPressed: () => onItemTapped(index),
     );
   }
 
   Widget _buildCenterVRButton() {
     final isSelected = _currentIndex == 2;
     return GestureDetector(
-      onTap: () => _onItemTapped(2),
+      onTap: () => onItemTapped(2),
       child: Container(
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.cyan.shade200 : Colors.grey.shade200,
+          color: isSelected ? const Color(0xFF48CAE4) : Colors.grey.shade200,
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -143,7 +145,7 @@ class _MainNavigatorState extends State<MainNavigator> {
     );
   }
 
-  void _onItemTapped(int index) {
+  void onItemTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
@@ -189,7 +191,9 @@ class _LoginPageState extends State<LoginPage> {
         print('🚀 Sending token to backend...');
         try {
           final response = await http.post(
-            Uri.parse('http://172.20.10.7:3000/verifyToken'),
+            // Uri.parse('http://172.20.10.7:3000/verifyToken'), //use this for galaxy a71
+            Uri.parse(
+                'http://10.0.2.2:3000/verifyToken'), //use this for android studio
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -259,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Container(
               height: 280,
               decoration: BoxDecoration(
-                color: Colors.cyan.shade200,
+                color: const Color(0xFF48CAE4),
                 borderRadius: const BorderRadius.vertical(
                   bottom: Radius.circular(80),
                 ),
@@ -366,7 +370,7 @@ class _LoginPageState extends State<LoginPage> {
                         ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.cyan,
+                            backgroundColor: const Color(0xFF48CAE4),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -497,50 +501,74 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Create user with Firebase
+      print('🔑 Starting signup process...');
+
+      // First create user in Firebase Auth
       final userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      print(
+          '✅ Firebase Auth account created with ID: ${userCredential.user?.uid}');
 
-      // Update the user's display name with both first and last name
+      // Then send signup data to backend with the Firebase Auth UID
+      print('🚀 Sending signup data to backend...');
+      try {
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:3000/signup'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: json.encode({
+            'uid': userCredential.user?.uid, // Send the Firebase Auth UID
+            'email': _emailController.text.trim(),
+            'password': _passwordController.text.trim(),
+            'firstName': _firstNameController.text.trim(),
+            'lastName': _lastNameController.text.trim(),
+          }),
+        );
+
+        print('📥 Backend response status: ${response.statusCode}');
+        print('📥 Backend response body: ${response.body}');
+
+        if (response.statusCode != 201) {
+          throw Exception(
+              'Backend returned ${response.statusCode}: ${response.body}');
+        }
+      } catch (e) {
+        print('❌ Backend communication error: $e');
+        throw Exception('Failed to communicate with backend: $e');
+      }
+
+      // Update the user's display name
       await userCredential.user?.updateDisplayName(
           '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}');
-
-      // Store additional user data in Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user?.uid)
-          .set({
-        'firstName': _firstNameController.text.trim(),
-        'lastName': _lastNameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'createdAt': FieldValue.serverTimestamp(),
-      });
 
       // Registration successful, return to login page
       if (mounted) {
         Navigator.pop(context);
+
+        // Force a reload of the HomePage data
+        final homeState = context.findAncestorStateOfType<HomePageState>();
+        if (homeState != null) {
+          await homeState.loadUserData();
+        }
       }
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
+      print('❌ Error during signup: $e');
       String message = 'Registration failed';
-      if (e.code == 'weak-password') {
-        message = 'The password provided is too weak';
-      } else if (e.code == 'email-already-in-use') {
-        message = 'An account already exists for this email';
+      if (e is FirebaseAuthException) {
+        if (e.code == 'weak-password') {
+          message = 'The password provided is too weak';
+        } else if (e.code == 'email-already-in-use') {
+          message = 'An account already exists for this email';
+        }
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
-        );
-      }
-    } catch (e) {
-      print('Error during registration: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('An error occurred during registration')),
         );
       }
     } finally {
@@ -562,7 +590,7 @@ class _SignupPageState extends State<SignupPage> {
             child: Container(
               height: 280,
               decoration: BoxDecoration(
-                color: Colors.cyan.shade200,
+                color: const Color(0xFF48CAE4),
                 borderRadius: const BorderRadius.vertical(
                   bottom: Radius.circular(80),
                 ),
@@ -736,7 +764,7 @@ class _SignupPageState extends State<SignupPage> {
                         ElevatedButton(
                           onPressed: _isLoading ? null : _signup,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.cyan,
+                            backgroundColor: const Color(0xFF48CAE4),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -849,7 +877,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ElevatedButton(
               onPressed: _isLoading ? null : _resetPassword,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyan,
+                backgroundColor: const Color(0xFF48CAE4),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(

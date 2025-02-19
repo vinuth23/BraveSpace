@@ -2,9 +2,45 @@ import 'package:flutter/material.dart';
 import 'activity_history_page.dart';
 import 'goals_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String _userName = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        final userData =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (userData.exists) {
+          setState(() {
+            _userName = '${userData['firstName']} ${userData['lastName']}';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _signOut(BuildContext context) async {
     try {
@@ -31,7 +67,7 @@ class ProfilePage extends StatelessWidget {
             child: Container(
               height: 250,
               decoration: BoxDecoration(
-                color: Colors.cyan.shade200,
+                color: const Color(0xFF48CAE4),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(24),
                   bottomRight: Radius.circular(24),
@@ -83,13 +119,15 @@ class ProfilePage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Daniel Williams',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          _isLoading
+                              ? const CircularProgressIndicator()
+                              : Text(
+                                  _userName,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                           const Text(
                             'Sri Lanka',
                             style: TextStyle(
