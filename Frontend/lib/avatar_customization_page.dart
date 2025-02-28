@@ -137,3 +137,29 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               ],
             ),
           ),
+
+          // App header with menu and back button
+          Container(
+            color: const Color(0xFF5ECCE9),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () {},
+                ),
+                const Text(
+                  'Create Your Avatar',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_ios),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
