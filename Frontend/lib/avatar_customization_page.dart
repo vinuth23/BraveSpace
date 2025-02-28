@@ -19,3 +19,30 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+class AvatarCreatorScreen extends StatefulWidget {
+  const AvatarCreatorScreen({Key? key}) : super(key: key);
+
+  @override
+  State<AvatarCreatorScreen> createState() => _AvatarCreatorScreenState();
+}
+
+class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
+  // Selected category
+  String selectedCategory = 'Basic';
+  
+  // Avatar properties
+  Color selectedSkinTone = const Color(0xFFEAC393); // Default middle skin tone
+  int selectedFaceIndex = 0;
+  
+  // Original values for reset functionality
+  late Color originalSkinTone;
+  late int originalFaceIndex;
+  
+  // List of categories
+  final List<Map<String, dynamic>> categories = [
+    {'name': 'Basic', 'icon': Icons.person},
+    {'name': 'Hair', 'icon': Icons.face},
+    {'name': 'Outfit', 'icon': Icons.checkroom},
+    {'name': 'Extras', 'icon': Icons.auto_awesome},
+  ];
