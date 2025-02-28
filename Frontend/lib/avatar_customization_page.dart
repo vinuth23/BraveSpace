@@ -91,3 +91,49 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
       const SnackBar(content: Text('Avatar saved successfully!')),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          // Status bar area
+          Container(
+            color: const Color(0xFF5ECCE9),
+            padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '10:48',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.signal_cellular_alt, size: 16),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.wifi, size: 16),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        '31',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
