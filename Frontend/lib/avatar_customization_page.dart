@@ -46,3 +46,48 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     {'name': 'Outfit', 'icon': Icons.checkroom},
     {'name': 'Extras', 'icon': Icons.auto_awesome},
   ];
+
+  // Skin tone options
+  final List<Color> skinTones = [
+    const Color(0xFFF8E5C9), // Lightest
+    const Color(0xFFFFDCB5), // Light
+    const Color(0xFFEAC393), // Medium
+    const Color(0xFFBF8A63), // Dark
+    const Color(0xFF7D5339), // Darkest
+  ];
+  
+  // Face expressions
+  final List<String> faceExpressions = [
+    '( ͡° ͜ʖ ͡°)', // Normal
+    '(≧▽≦)', // Smiling
+    '(♥ω♥ )', // Love eyes
+    '(¬_¬)', // Side-eye
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize original values
+    originalSkinTone = selectedSkinTone;
+    originalFaceIndex = selectedFaceIndex;
+  }
+
+  void resetChanges() {
+    setState(() {
+      selectedSkinTone = originalSkinTone;
+      selectedFaceIndex = originalFaceIndex;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Changes reset!')),
+    );
+  }
+
+  void saveAvatar() {
+    // Save current values as original
+    originalSkinTone = selectedSkinTone;
+    originalFaceIndex = selectedFaceIndex;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Avatar saved successfully!')),
+    );
+  }
