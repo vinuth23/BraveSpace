@@ -216,3 +216,90 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               ),
             ),
           ),
+
+          // Category tabs
+          SizedBox(
+            height: 80,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: categories.map((category) {
+                bool isSelected = selectedCategory == category['name'];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedCategory = category['name'];
+                    });
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        category['icon'],
+                        color: isSelected ? Colors.black : Colors.grey,
+                        size: 28,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        category['name'],
+                        style: TextStyle(
+                          color: isSelected ? Colors.black : Colors.grey,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (isSelected)
+                        Container(
+                          height: 2,
+                          width: 40,
+                          color: Colors.black,
+                        ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          
+          // Customization options based on selected category
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (selectedCategory == 'Basic') ...[
+                    // Skin tone section
+                    const Text(
+                      'Skin Tone',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: skinTones.map((color) {
+                        bool isSelected = selectedSkinTone == color;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedSkinTone = color;
+                            });
+                          },
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: isSelected
+                                  ? Border.all(color: Colors.blue, width: 3)
+                                  : null,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    
+                    const SizedBox(height: 24),
