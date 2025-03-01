@@ -303,3 +303,75 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                     ),
                     
                     const SizedBox(height: 24),
+
+                    // Face expressions section
+                    const Text(
+                      'Face',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(
+                        faceExpressions.length,
+                        (index) {
+                          bool isSelected = selectedFaceIndex == index;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedFaceIndex = index;
+                              });
+                            },
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                border: isSelected
+                                    ? Border.all(color: Colors.blue, width: 2)
+                                    : Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  faceExpressions[index],
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  
+                  if (selectedCategory == 'Hair') ...[
+                    const Center(
+                      child: Text(
+                        'Hair styles coming soon!',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                  
+                  if (selectedCategory == 'Outfit') ...[
+                    const Center(
+                      child: Text(
+                        'Outfit options coming soon!',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                  
+                  if (selectedCategory == 'Extras') ...[
+                    const Center(
+                      child: Text(
+                        'Extra accessories coming soon!',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                  
+                  const SizedBox(height: 24),
