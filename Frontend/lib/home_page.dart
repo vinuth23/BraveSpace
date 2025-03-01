@@ -55,9 +55,9 @@ class HomePageState extends State<HomePage> {
         if (challengesSnapshot.docs.isEmpty) {
           print('❌ No challenges found for user');
         } else {
-          challengesSnapshot.docs.forEach((doc) {
+          for (var doc in challengesSnapshot.docs) {
             print('📋 Challenge data: ${doc.data()}');
-          });
+          }
         }
 
         // Get upcoming sessions
@@ -71,9 +71,9 @@ class HomePageState extends State<HomePage> {
         if (sessionsSnapshot.docs.isEmpty) {
           print('❌ No sessions found for user');
         } else {
-          sessionsSnapshot.docs.forEach((doc) {
+          for (var doc in sessionsSnapshot.docs) {
             print('📋 Session data: ${doc.data()}');
-          });
+          }
         }
 
         final challenges = challengesSnapshot.docs
@@ -272,7 +272,7 @@ class HomePageState extends State<HomePage> {
                                     color: const Color(0xFF48CAE4),
                                   ),
                                 ))
-                            .toList(),
+                            ,
                       ],
                     ),
                   ),
@@ -471,7 +471,7 @@ class Session {
     final hour = startTime.hour;
     final period = hour < 12 ? 'am' : 'pm';
     final adjustedHour = hour > 12 ? hour - 12 : hour;
-    return '${adjustedHour}$period';
+    return '$adjustedHour$period';
   }
 
   factory Session.fromFirestore(DocumentSnapshot doc) {
