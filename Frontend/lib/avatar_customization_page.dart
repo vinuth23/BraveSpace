@@ -163,3 +163,56 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               ],
             ),
           ),
+
+          // Avatar preview area
+          Container(
+            height: 200,
+            decoration: const BoxDecoration(
+              color: Color(0xFF5ECCE9),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(200),
+                bottomRight: Radius.circular(200),
+              ),
+            ),
+            child: Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Avatar face background
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: selectedSkinTone,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  
+                  // Hair (simplified)
+                  Positioned(
+                    top: 0,
+                    child: Container(
+                      width: 120,
+                      height: 60,
+                      decoration: const BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(60),
+                          topRight: Radius.circular(60),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Face expression
+                  Text(
+                    faceExpressions[selectedFaceIndex],
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
