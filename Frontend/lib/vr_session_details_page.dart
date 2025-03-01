@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'notifications_page.dart';
+import 'notifications_page.dart';
 
 class VRSessionDetailsPage extends StatelessWidget {
   const VRSessionDetailsPage({super.key});
@@ -26,7 +26,14 @@ class VRSessionDetailsPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsPage(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -71,8 +78,8 @@ class VRSessionDetailsPage extends StatelessWidget {
                       ElevatedButton.icon(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 12,
@@ -80,8 +87,20 @@ class VRSessionDetailsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
+                          // Add this side parameter for the border
+                          side: BorderSide(
+                            color: Colors.grey,
+                            width: 1.0,
+                          ),
                         ),
-                        icon: const Icon(Icons.vrpano, size: 18),
+                        icon: Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Image.asset(
+                            'assets/icons/vr_headset_icon.png',
+                            width: 20,
+                            height: 20,
+                          ),
+                        ),
                         label: const Text('Play'),
                       ),
                     ],

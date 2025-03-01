@@ -136,10 +136,14 @@ class MainNavigatorState extends State<MainNavigator> {
           color: isSelected ? const Color(0xFF48CAE4) : Colors.grey.shade200,
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.vrpano,
-          color: isSelected ? Colors.white : Colors.black,
-          size: 24,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset(
+            'assets/icons/vr_headset_icon.png', // Update this path to your PNG file
+            width: 20,
+            height: 20,
+            // No need for colorFilter since it's a PNG
+          ),
         ),
       ),
     );

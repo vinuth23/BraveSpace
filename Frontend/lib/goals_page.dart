@@ -25,7 +25,7 @@ class GoalsPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Main content
           SafeArea(
             child: Column(
@@ -36,7 +36,7 @@ class GoalsPage extends StatelessWidget {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const Text(
@@ -44,7 +44,7 @@ class GoalsPage extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -60,7 +60,8 @@ class GoalsPage extends StatelessWidget {
                         icon: Icons.track_changes,
                         iconColor: Colors.blue,
                         title: 'Weekly Social Challenge',
-                        description: 'Complete 2 different social interaction scenarios',
+                        description:
+                            'Complete 2 different social interaction scenarios',
                         progress: 0.5,
                         progressText: '1/2',
                         points: 100,
@@ -69,7 +70,8 @@ class GoalsPage extends StatelessWidget {
                         icon: Icons.star,
                         iconColor: Colors.purple,
                         title: 'Emotional Explorer',
-                        description: 'Correctly identify emotions in 2 scenarios',
+                        description:
+                            'Correctly identify emotions in 2 scenarios',
                         progress: 0.5,
                         progressText: '1/2',
                         points: 100,
@@ -78,7 +80,8 @@ class GoalsPage extends StatelessWidget {
                         icon: Icons.chat_bubble_outline,
                         iconColor: Colors.green,
                         title: 'Conversation Confidence',
-                        description: 'Practice conversations in 3 different scenarios',
+                        description:
+                            'Practice conversations in 3 different scenarios',
                         progress: 0.67,
                         progressText: '2/3',
                         points: 100,
@@ -257,4 +260,4 @@ class GoalsPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -65,7 +65,7 @@ class _ProfilePageState extends State<ProfilePage> {
             left: 0,
             right: 0,
             child: Container(
-              height: 250,
+              height: 350,
               decoration: BoxDecoration(
                 color: const Color(0xFF48CAE4),
                 borderRadius: const BorderRadius.only(
@@ -86,18 +86,33 @@ class _ProfilePageState extends State<ProfilePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'User Profile',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.black,
+                              ),
+                              onPressed: () {
+                                if (Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                }
+                              },
+                            ),
+                            const Text(
+                              'User Profile',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
                         ),
                         IconButton(
                           icon: const Icon(
                             Icons.notifications_outlined,
-                            color: Colors.white,
+                            color: Colors.black,
                           ),
                           onPressed: () {},
                         ),
@@ -131,7 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           const Text(
                             'Sri Lanka',
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: Colors.black,
                             ),
                           ),
                         ],

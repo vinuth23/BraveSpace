@@ -18,6 +18,8 @@ dependencies:
   firebase_auth: ^5.3.4  # Latest stable version that works with core 2.24.2
 
   cupertino_icons: ^1.0.8
+  # Remove the flutter_svg dependency if not needed
+  # flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:
@@ -30,3 +32,4 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/icons/  # Keep the PNG reference

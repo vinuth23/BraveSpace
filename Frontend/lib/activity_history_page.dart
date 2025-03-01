@@ -25,7 +25,7 @@ class ActivityHistoryPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Main content
           SafeArea(
             child: Column(
@@ -36,7 +36,7 @@ class ActivityHistoryPage extends StatelessWidget {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const Text(
@@ -44,12 +44,13 @@ class ActivityHistoryPage extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.help_outline, color: Colors.white),
+                        icon:
+                            const Icon(Icons.help_outline, color: Colors.black),
                         onPressed: () {},
                       ),
                     ],
@@ -84,7 +85,8 @@ class ActivityHistoryPage extends StatelessWidget {
                                 children: [
                                   const Text('expand'),
                                   const SizedBox(width: 4),
-                                  Icon(Icons.open_in_new, 
+                                  Icon(
+                                    Icons.open_in_new,
                                     size: 16,
                                     color: Colors.cyan.shade300,
                                   ),
@@ -154,7 +156,8 @@ class ActivityHistoryPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDayColumn(String day, bool isCompleted, {bool isSelected = false}) {
+  Widget _buildDayColumn(String day, bool isCompleted,
+      {bool isSelected = false}) {
     return Column(
       children: [
         Text(
@@ -169,10 +172,10 @@ class ActivityHistoryPage extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: isSelected 
-                ? Colors.black 
-                : isCompleted 
-                    ? Colors.cyan.shade50 
+            color: isSelected
+                ? Colors.black
+                : isCompleted
+                    ? Colors.cyan.shade50
                     : Colors.grey.shade200,
             shape: BoxShape.circle,
           ),
@@ -239,4 +242,4 @@ class ActivityHistoryPage extends StatelessWidget {
       ),
     );
   }
-} 
+}
