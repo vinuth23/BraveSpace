@@ -11,6 +11,8 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'login_page.dart'; // No need to import since it's in the same file
 
+
+
 export 'main.dart' show MainNavigatorState;
 
 void main() async {
@@ -900,5 +902,27 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ),
       ),
     );
+  }
+}
+
+Future<List<String>> fetchVrVideos() async {
+  final response = await http.get(Uri.parse("http://your-server-url/get-vr"));
+
+  if (response.statusCode == 200) {
+    List<dynamic> vrVideos = jsonDecode(response.body);
+    return vrVideos.map((video) => video["url"] as String).toList();
+  } else {
+    throw Exception("Failed to load VR videos");
+  }
+}
+
+Future<String?> fetchLatestAvatar() async {
+  final response = await http.get(Uri.parse("http://your-server-url/get-avatar"));
+
+  if (response.statusCode == 200) {
+    Map<String, dynamic> data = jsonDecode(response.body);
+    return data["url"];
+  } else {
+    throw Exception("Failed to load avatar");
   }
 }
