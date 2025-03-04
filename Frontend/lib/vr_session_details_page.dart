@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import 'notifications_page.dart';
 
-class VRSessionDetailsPage extends StatelessWidget {
+class VRSessionDetailsPage extends StatefulWidget {
   const VRSessionDetailsPage({super.key});
+
+  @override
+  _VRSessionDetailsPageState createState() => _VRSessionDetailsPageState();
+}
+
+class _VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
+  String videoUrl = "https://your-cloud-storage-link.com/video.mp4"; // Replace with backend URL
+
+  void _playVideo(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +93,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                         ],
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () => _playVideo(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
@@ -87,8 +104,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          // Add this side parameter for the border
-                          side: BorderSide(
+                          side: const BorderSide(
                             color: Colors.grey,
                             width: 1.0,
                           ),
@@ -105,63 +121,6 @@ class VRSessionDetailsPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'In the upcoming VR public speaking session, the student will deliver a 2-minute speech in front of a virtual classroom filled with simulated classmates. The scenario will replicate a real classroom setting with audience reactions, including eye contact from classmates, slight background noise, and occasional distractions (such as students shifting in their seats). The goal will be to simulate a realistic public speaking experience and help the student practice confidence, speech clarity, and audience engagement.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Achievements',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _AchievementCard(
-                    icon: 'assets/images/master_presenter.jpg',
-                    title: 'Master Presenter',
-                    description:
-                        'Deliver a speech with minimal hesitation or filler words (e.g., "um," "uh").',
-                    points: 50,
-                  ),
-                  const SizedBox(height: 12),
-                  _AchievementCard(
-                    icon: 'assets/images/master_presenter.jpg',
-                    title: 'Eye Contact Expert',
-                    description:
-                        'Maintain consistent eye contact with different audience members throughout the presentation.',
-                    points: 30,
-                  ),
-                  const SizedBox(height: 12),
-                  _AchievementCard(
-                    icon: 'assets/images/master_presenter.jpg',
-                    title: 'Composure Champion',
-                    description:
-                        'Successfully maintain composure and continue presenting despite audience distractions.',
-                    points: 40,
-                  ),
-                  const SizedBox(height: 12),
-                  _AchievementCard(
-                    icon: 'assets/images/master_presenter.jpg',
-                    title: 'Voice Virtuoso',
-                    description:
-                        'Demonstrate excellent voice modulation and clear pronunciation throughout the speech.',
-                    points: 35,
-                  ),
                 ],
               ),
             ),
@@ -172,70 +131,44 @@ class VRSessionDetailsPage extends StatelessWidget {
   }
 }
 
-class _AchievementCard extends StatelessWidget {
-  final String icon;
-  final String title;
-  final String description;
-  final int points;
+class VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+  const VideoPlayerScreen({super.key, required this.videoUrl});
 
-  const _AchievementCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.points,
-  });
+  @override
+  _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(widget.videoUrl)
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              icon,
-              width: 48,
-              height: 48,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            '${points}pts',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+    return Scaffold(
+      appBar: AppBar(title: const Text("VR Video")),
+      body: Center(
+        child: _controller.value.isInitialized
+            ? AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: VideoPlayer(_controller),
+              )
+            : const CircularProgressIndicator(),
       ),
     );
   }
