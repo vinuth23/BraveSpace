@@ -6,10 +6,10 @@ class VRSessionDetailsPage extends StatefulWidget {
   const VRSessionDetailsPage({super.key});
 
   @override
-  _VRSessionDetailsPageState createState() => _VRSessionDetailsPageState();
+  VRSessionDetailsPageState createState() => VRSessionDetailsPageState();
 }
 
-class _VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
+class VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
   String videoUrl = "https://your-cloud-storage-link.com/video.mp4"; // Replace with backend URL
 
   void _playVideo(BuildContext context) {

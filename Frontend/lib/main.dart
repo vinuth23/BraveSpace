@@ -5,10 +5,8 @@ import 'home_page.dart';
 import 'notifications_page.dart';
 import 'vr_sessions_page.dart';
 import 'profile_page.dart';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'login_page.dart'; // No need to import since it's in the same file
 
 
