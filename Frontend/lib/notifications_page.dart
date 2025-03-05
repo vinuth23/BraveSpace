@@ -14,10 +14,10 @@ class NotificationsPage extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            height: 200,
+            height: 220,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.cyan.shade200,
+                color: const Color(0xFF48CAE4),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
