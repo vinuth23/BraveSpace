@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'services/speech_session_service.dart';
 import 'package:intl/intl.dart';
+import 'notifications_page.dart';
+import 'dart:async';
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
@@ -14,25 +16,65 @@ class _ProgressPageState extends State<ProgressPage> {
   bool _isLoading = true;
   Map<String, dynamic> _userStats = {};
   List<SpeechSession> _recentSessions = [];
+  StreamSubscription<List<SpeechSession>>? _sessionsSubscription;
+  bool _disposed = false;
 
   @override
   void initState() {
     super.initState();
-    _loadUserStats();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    await _loadUserStats();
+    if (!_disposed) {
+      _sessionsSubscription = _sessionService.getUserSessions().listen(
+        (sessions) {
+          if (!_disposed) {
+            setState(() {
+              _recentSessions = sessions;
+            });
+          }
+        },
+        onError: (error) {
+          if (!_disposed) {
+            print('Error in session stream: $error');
+          }
+        },
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _sessionsSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUserStats() async {
+    if (_disposed) return;
+
     setState(() => _isLoading = true);
     try {
       final stats = await _sessionService.getUserStats();
+      if (_disposed) return;
+
       setState(() {
         _userStats = stats;
         _isLoading = false;
       });
     } catch (e) {
       print('Error loading stats: $e');
+      if (_disposed) return;
+
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _refreshData() async {
+    if (_disposed) return;
+    await _loadUserStats();
   }
 
   List<bool> _getWeeklyProgress(List<SpeechSession> sessions) {
@@ -66,7 +108,7 @@ class _ProgressPageState extends State<ProgressPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF0F0F0),
       body: Stack(
         children: [
           // Curved background
@@ -74,12 +116,13 @@ class _ProgressPageState extends State<ProgressPage> {
             top: 0,
             left: 0,
             right: 0,
+            height: 200,
             child: Container(
-              height: 280,
               decoration: const BoxDecoration(
                 color: Color(0xFF48CAE4),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(80),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
               ),
             ),
@@ -90,34 +133,46 @@ class _ProgressPageState extends State<ProgressPage> {
               children: [
                 // App Bar
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                       const Text(
                         'Progress Tracking',
                         style: TextStyle(
-                          fontSize: 24,
+                          color: Colors.black,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white),
-                        onPressed: _loadUserStats,
+                        icon: const Icon(Icons.notifications_outlined,
+                            color: Colors.black),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsPage(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-                // Content
+                // Scrollable Content
                 Expanded(
                   child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(color: Colors.white))
+                      ? const Center(child: CircularProgressIndicator())
                       : StreamBuilder<List<SpeechSession>>(
                           stream: _sessionService.getUserSessions(),
                           builder: (context, snapshot) {
+                            if (_disposed) return const SizedBox.shrink();
+
                             if (snapshot.hasError) {
                               return Center(
                                   child: Text('Error: ${snapshot.error}'));
@@ -133,21 +188,30 @@ class _ProgressPageState extends State<ProgressPage> {
                             final avgMetrics =
                                 _calculateAverageMetrics(sessions);
 
-                            return SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 20),
-                                  _buildWeeklyProgress(weeklyProgress),
-                                  const SizedBox(height: 20),
-                                  _buildVRSessions(avgMetrics),
-                                  const SizedBox(height: 20),
-                                  _buildActivity(sessions),
-                                  const SizedBox(height: 20),
-                                ],
+                            return RefreshIndicator(
+                              onRefresh: _refreshData,
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 100),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 20),
+                                      _buildWeeklyProgress(weeklyProgress),
+                                      const SizedBox(height: 20),
+                                      _buildVRSessions(avgMetrics),
+                                      const SizedBox(height: 20),
+                                      _buildActivity(sessions),
+                                      const SizedBox(height: 20),
+                                    ],
+                                  ),
+                                ),
                               ),
                             );
-                          }),
+                          },
+                        ),
                 ),
               ],
             ),
@@ -177,6 +241,7 @@ class _ProgressPageState extends State<ProgressPage> {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -196,16 +261,19 @@ class _ProgressPageState extends State<ProgressPage> {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final isToday = now.weekday == index + 1;
-              return _buildDayCircle(
-                dayNames[index],
-                weekProgress[index],
-                isSelected: isToday,
-              );
-            }),
+          SizedBox(
+            height: 80,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(7, (index) {
+                final isToday = now.weekday == index + 1;
+                return _buildDayCircle(
+                  dayNames[index],
+                  weekProgress[index],
+                  isSelected: isToday,
+                );
+              }),
+            ),
           ),
         ],
       ),
@@ -214,38 +282,44 @@ class _ProgressPageState extends State<ProgressPage> {
 
   Widget _buildDayCircle(String day, bool completed,
       {bool isSelected = false}) {
-    return Column(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isSelected
-                ? Colors.black
-                : completed
-                    ? Colors.grey.shade200
-                    : Colors.grey.shade100,
+    return SizedBox(
+      width: 40,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected
+                  ? Colors.black
+                  : completed
+                      ? Colors.grey.shade200
+                      : Colors.grey.shade100,
+            ),
+            child: Center(
+              child: completed
+                  ? Icon(
+                      Icons.check,
+                      color: isSelected ? Colors.white : Colors.green,
+                      size: 20,
+                    )
+                  : null,
+            ),
           ),
-          child: Center(
-            child: completed
-                ? Icon(
-                    Icons.check,
-                    color: isSelected ? Colors.white : Colors.green,
-                    size: 20,
-                  )
-                : null,
+          const SizedBox(height: 4),
+          Text(
+            day,
+            style: TextStyle(
+              color: isSelected ? Colors.black : Colors.grey,
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          day,
-          style: TextStyle(
-            color: isSelected ? Colors.black : Colors.grey,
-            fontSize: 12,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -255,13 +329,22 @@ class _ProgressPageState extends State<ProgressPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'VR Sessions',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Performance Metrics',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              TextButton(
+                onPressed: _loadUserStats,
+                child: const Text('Refresh'),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           SingleChildScrollView(
@@ -304,45 +387,55 @@ class _ProgressPageState extends State<ProgressPage> {
               color: Colors.white.withOpacity(0.5),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title.capitalize(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '$percentage%',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Container(
-                height: 4,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: percentage / 100,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(2),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      title.capitalize(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ),
-            ],
+                  const SizedBox(height: 8),
+                  Text(
+                    '$percentage%',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 4,
+                    width: constraints.maxWidth,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: percentage / 100,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -357,13 +450,25 @@ class _ProgressPageState extends State<ProgressPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Activity',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Activity',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              if (sessions.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    // Add view all functionality here
+                  },
+                  child: const Text('View All'),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           ...recentSessions.map((session) {
@@ -429,6 +534,7 @@ class _ProgressPageState extends State<ProgressPage> {
               ],
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
                   width: 40,
@@ -442,6 +548,7 @@ class _ProgressPageState extends State<ProgressPage> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -450,6 +557,8 @@ class _ProgressPageState extends State<ProgressPage> {
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         subtitle,
@@ -461,10 +570,8 @@ class _ProgressPageState extends State<ProgressPage> {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: onTap,
-                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right),
               ],
             ),
           ),
@@ -474,6 +581,8 @@ class _ProgressPageState extends State<ProgressPage> {
   }
 
   void _showSessionDetails(SpeechSession session) {
+    if (!mounted) return;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

@@ -77,7 +77,7 @@ class MainNavigatorState extends State<MainNavigator> {
   final List<Widget> _pages = [
     const HomePage(),
     const NotificationsPage(),
-    const TestSpeechPage(),
+    const VRSessionsPage(),
     const ProgressPage(),
     const ProfilePage(),
   ];

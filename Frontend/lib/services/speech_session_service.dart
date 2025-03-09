@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SpeechSession {
   final String id;
@@ -51,27 +53,117 @@ class SpeechSession {
 }
 
 class SpeechSessionService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String baseUrl =
+      'http://172.20.10.7:3000'; // Physical device IP address
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get current user's sessions
-  Stream<List<SpeechSession>> getUserSessions() {
-    final user = _auth.currentUser;
-    if (user == null) return Stream.value([]);
+  Future<String?> _getAuthToken() async {
+    return await _auth.currentUser?.getIdToken();
+  }
 
-    return _firestore
-        .collection('speech_sessions')
-        .where('userId', isEqualTo: user.uid)
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => SpeechSession.fromFirestore(doc))
-            .toList());
+  // Get current user's sessions
+  Stream<List<SpeechSession>> getUserSessions() async* {
+    final user = _auth.currentUser;
+    if (user == null) {
+      yield [];
+      return;
+    }
+
+    while (true) {
+      try {
+        final token = await _getAuthToken();
+        if (token == null) {
+          yield [];
+          return;
+        }
+
+        final response = await http.get(
+          Uri.parse('$baseUrl/speech-sessions'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final sessions = (data['sessions'] as List)
+              .map((session) => SpeechSession(
+                    id: session['id'],
+                    userId: session['userId'],
+                    timestamp: session['timestamp'] != null
+                        ? (session['timestamp'] is Timestamp
+                            ? (session['timestamp'] as Timestamp).toDate()
+                            : DateTime.fromMillisecondsSinceEpoch(
+                                session['timestamp']['_seconds'] * 1000))
+                        : DateTime.now(),
+                    topic: session['topic'],
+                    speechText: session['speechText'],
+                    metrics: Map<String, double>.from(
+                      session['metrics'].map((key, value) => MapEntry(
+                            key,
+                            value is int ? value.toDouble() : value as double,
+                          )),
+                    ),
+                    duration: session['duration'],
+                    feedback: List<String>.from(session['feedback']),
+                  ))
+              .toList();
+          yield sessions;
+        } else {
+          yield [];
+        }
+      } catch (e) {
+        print('Error fetching sessions: $e');
+        yield [];
+      }
+
+      // Wait for 5 seconds before next update
+      await Future.delayed(const Duration(seconds: 5));
+    }
   }
 
   // Save a new session
   Future<void> saveSession(SpeechSession session) async {
-    await _firestore.collection('speech_sessions').add(session.toFirestore());
+    final token = await _getAuthToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/speech-sessions'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(session.toFirestore()),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save session');
+    }
+  }
+
+  // Get user statistics
+  Future<Map<String, dynamic>> getUserStats() async {
+    final token = await _getAuthToken();
+    if (token == null) return {};
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user-stats'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return {};
+    } catch (e) {
+      print('Error fetching user stats: $e');
+      return {};
+    }
   }
 
   // Mock speech analysis
@@ -166,40 +258,5 @@ class SpeechSessionService {
     feedback.add('Keep practicing to improve further');
 
     return feedback;
-  }
-
-  // Get session statistics
-  Future<Map<String, dynamic>> getUserStats() async {
-    final user = _auth.currentUser;
-    if (user == null) return {};
-
-    final sessions = await _firestore
-        .collection('speech_sessions')
-        .where('userId', isEqualTo: user.uid)
-        .get();
-
-    if (sessions.docs.isEmpty) {
-      return {
-        'totalSessions': 0,
-        'totalDuration': 0,
-        'averageScore': 0.0,
-      };
-    }
-
-    int totalDuration = 0;
-    double totalScore = 0.0;
-
-    for (var doc in sessions.docs) {
-      final session = SpeechSession.fromFirestore(doc);
-      totalDuration += session.duration;
-      totalScore += session.metrics.values.reduce((a, b) => a + b) /
-          session.metrics.length;
-    }
-
-    return {
-      'totalSessions': sessions.docs.length,
-      'totalDuration': totalDuration,
-      'averageScore': totalScore / sessions.docs.length,
-    };
   }
 }

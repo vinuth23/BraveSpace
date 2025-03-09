@@ -180,6 +180,106 @@ app.get("/progress", verifyToken, async (req, res) => {
   }
 });
 
+// Save speech session endpoint
+app.post("/speech-sessions", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+  const { topic, speechText, metrics, duration, feedback } = req.body;
+
+  if (!topic || !speechText || !metrics || !duration || !feedback) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  try {
+    const sessionRef = await db.collection("speech_sessions").add({
+      userId,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      topic,
+      speechText,
+      metrics,
+      duration,
+      feedback
+    });
+
+    res.json({ 
+      message: "Speech session saved successfully", 
+      sessionId: sessionRef.id 
+    });
+  } catch (error) {
+    console.error("Error saving speech session:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get user's speech sessions
+app.get("/speech-sessions", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+
+  try {
+    const sessionsSnapshot = await db.collection("speech_sessions")
+      .where("userId", "==", userId)
+      .orderBy("timestamp", "desc")
+      .get();
+
+    const sessions = [];
+    sessionsSnapshot.forEach(doc => {
+      const data = doc.data();
+      sessions.push({
+        id: doc.id,
+        ...data,
+        timestamp: {
+          _seconds: data.timestamp.seconds,
+          _nanoseconds: data.timestamp.nanoseconds
+        }
+      });
+    });
+
+    res.json({ sessions });
+  } catch (error) {
+    console.error("Error fetching speech sessions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get user statistics
+app.get("/user-stats", verifyToken, async (req, res) => {
+  const userId = req.user.uid;
+
+  try {
+    const sessionsSnapshot = await db.collection("speech_sessions")
+      .where("userId", "==", userId)
+      .get();
+
+    if (sessionsSnapshot.empty) {
+      return res.json({
+        totalSessions: 0,
+        totalDuration: 0,
+        averageScore: 0.0
+      });
+    }
+
+    let totalDuration = 0;
+    let totalScore = 0;
+    const sessions = [];
+
+    sessionsSnapshot.forEach(doc => {
+      const session = doc.data();
+      sessions.push(session);
+      totalDuration += session.duration;
+      const sessionAvg = Object.values(session.metrics).reduce((a, b) => a + b, 0) / Object.keys(session.metrics).length;
+      totalScore += sessionAvg;
+    });
+
+    res.json({
+      totalSessions: sessions.length,
+      totalDuration: totalDuration,
+      averageScore: totalScore / sessions.length
+    });
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // Function to create initial user data
 async function createInitialUserData(userId) {
   await createUserChallenges(userId);
