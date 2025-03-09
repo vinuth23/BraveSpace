@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'test_speech_page.dart';
 
 export 'main.dart' show MainNavigatorState;
 
@@ -76,7 +77,7 @@ class MainNavigatorState extends State<MainNavigator> {
   final List<Widget> _pages = [
     const HomePage(),
     const NotificationsPage(),
-    const VRSessionsPage(),
+    const TestSpeechPage(),
     const ProgressPage(),
     const ProfilePage(),
   ];
