@@ -7,6 +7,7 @@ import 'vr_sessions_page.dart';
 import 'profile_page.dart';
 import 'login_page.dart';
 import 'forgot_password_page.dart';
+import 'progress_page.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -76,7 +77,7 @@ class MainNavigatorState extends State<MainNavigator> {
     const HomePage(),
     const NotificationsPage(),
     const VRSessionsPage(),
-    const Center(child: Text('Progress Page')),
+    const ProgressPage(),
     const ProfilePage(),
   ];
 
