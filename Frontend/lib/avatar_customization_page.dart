@@ -95,3 +95,101 @@ class _AvatarCustomizationScreenState extends State<AvatarCustomizationScreen>
     );
   }
 
+  Widget _buildAvatarPreview() {
+    return Container(
+      height: 200,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Colors.lightBlueAccent,
+        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+      ),
+      child: Center(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CircleAvatar(radius: 70, backgroundColor: selectedSkinTone),
+            Image.asset(selectedHair, width: 120),
+            Image.asset(selectedOutfit, width: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkinToneOptions() {
+    List<Color> skinTones = [Colors.bisque, Colors.peachpuff, Colors.saddlebrown, Colors.brown, Colors.black];
+    return ListView(
+      scrollDirection: Axis.horizontal,
+      children: skinTones.map((color) {
+        return GestureDetector(
+          onTap: () {
+            setState(() => selectedSkinTone = color);
+          },
+          child: Container(
+            width: 50,
+            height: 50,
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: selectedSkinTone == color ? Colors.blue : Colors.black, width: 3),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildHairOptions() {
+    List<String> hairStyles = ["assets/hair1.png", "assets/hair2.png"];
+    return ListView(
+      scrollDirection: Axis.horizontal,
+      children: hairStyles.map((imagePath) {
+        return GestureDetector(
+          onTap: () {
+            setState(() => selectedHair = imagePath);
+          },
+          child: Image.asset(imagePath, width: 80, height: 80),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildOutfitOptions() {
+    List<String> outfits = ["assets/outfit1.png", "assets/outfit2.png"];
+    return ListView(
+      scrollDirection: Axis.horizontal,
+      children: outfits.map((imagePath) {
+        return GestureDetector(
+          onTap: () {
+            setState(() => selectedOutfit = imagePath);
+          },
+          child: Image.asset(imagePath, width: 80, height: 80),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ElevatedButton(onPressed: _saveAvatarPreferences, child: const Text("Save Avatar")),
+          OutlinedButton(
+            onPressed: () {
+              setState(() {
+                selectedSkinTone = Colors.bisque;
+                selectedHair = "assets/hair1.png";
+                selectedOutfit = "assets/outfit1.png";
+              });
+            },
+            child: const Text("Reset Changes"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
