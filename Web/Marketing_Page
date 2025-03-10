@@ -94,4 +94,29 @@
             <div class="faq-item">Is the software easy to use?</div>
         </div>
     </section>
-     
+      
+    <footer class="fade-in">
+        <!-- Insert Footer Background Image Here -->
+        <h2>Start Your Child's Journey to Confidence</h2>
+        <p>Take the first step towards helping your child overcome social anxiety with BraveSpace.</p>
+        <a href="#" class="cta-button">Discover More</a>
+        <p>&copy; 2025 BraveSpace</p>
+    </footer>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let fadeIns = document.querySelectorAll(".fade-in");
+            let observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            fadeIns.forEach(section => observer.observe(section));
+        });
+    </script>
+</body>
+</html>
