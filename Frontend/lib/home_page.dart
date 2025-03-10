@@ -84,12 +84,14 @@ class HomePageState extends State<HomePage> {
             .map((doc) => Session.fromFirestore(doc))
             .toList();
 
-        setState(() {
-          _userName = firstName;
-          _challenges = challenges;
-          _upcomingSessions = sessions;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _userName = firstName;
+            _challenges = challenges;
+            _upcomingSessions = sessions;
+            _isLoading = false;
+          });
+        }
         print('✅ Data loaded successfully');
         print('📊 Loaded ${_challenges.length} challenges');
         print('📅 Loaded ${_upcomingSessions.length} sessions');

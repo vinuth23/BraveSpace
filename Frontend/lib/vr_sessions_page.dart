@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'vr_session_details_page.dart';
 import 'notifications_page.dart';
+import 'test_speech_page.dart';
 
 class VRSessionsPage extends StatelessWidget {
   const VRSessionsPage({super.key});
@@ -117,6 +118,33 @@ class VRSessionsPage extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 100,
+            child: Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TestSpeechPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.mic),
+                label: const Text('Try Test Speech Mode'),
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF48CAE4),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
