@@ -18,6 +18,7 @@ class _ProgressPageState extends State<ProgressPage> {
   List<SpeechSession> _recentSessions = [];
   StreamSubscription<List<SpeechSession>>? _sessionsSubscription;
   bool _disposed = false;
+  String? _error;
 
   @override
   void initState() {
@@ -33,11 +34,16 @@ class _ProgressPageState extends State<ProgressPage> {
           if (!_disposed) {
             setState(() {
               _recentSessions = sessions;
+              _error = null;
             });
           }
         },
         onError: (error) {
           if (!_disposed) {
+            setState(() {
+              _error = 'Unable to load sessions. Please try again later.';
+              _isLoading = false;
+            });
             print('Error in session stream: $error');
           }
         },
@@ -55,7 +61,11 @@ class _ProgressPageState extends State<ProgressPage> {
   Future<void> _loadUserStats() async {
     if (_disposed) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
     try {
       final stats = await _sessionService.getUserStats();
       if (_disposed) return;
@@ -68,26 +78,156 @@ class _ProgressPageState extends State<ProgressPage> {
       print('Error loading stats: $e');
       if (_disposed) return;
 
-      setState(() => _isLoading = false);
+      setState(() {
+        _error = 'Unable to load statistics. Please try again later.';
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> _refreshData() async {
     if (_disposed) return;
+    setState(() => _error = null);
     await _loadUserStats();
   }
 
-  List<bool> _getWeeklyProgress(List<SpeechSession> sessions) {
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final weekProgress = List.generate(7, (index) {
-      final date = startOfWeek.add(Duration(days: index));
-      return sessions.any((session) =>
-          session.timestamp.year == date.year &&
-          session.timestamp.month == date.month &&
-          session.timestamp.day == date.day);
-    });
-    return weekProgress;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0F0F0),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    return Stack(
+      children: [
+        _buildBackground(),
+        SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              if (_error != null) _buildErrorMessage(),
+              Expanded(
+                child: _buildContent(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBackground() {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 200,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF48CAE4),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const Text(
+            'Progress Tracking',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const NotificationsPage()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _error ?? '',
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.red),
+            onPressed: _refreshData,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              WeeklyProgressSection(sessions: _recentSessions),
+              const SizedBox(height: 20),
+              PerformanceMetricsSection(
+                metrics: _calculateAverageMetrics(_recentSessions),
+                onRefresh: _loadUserStats,
+              ),
+              const SizedBox(height: 20),
+              RecentActivitySection(
+                sessions: _recentSessions,
+                onSessionTap: _showSessionDetails,
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Map<String, double> _calculateAverageMetrics(List<SpeechSession> sessions) {
@@ -105,123 +245,37 @@ class _ProgressPageState extends State<ProgressPage> {
     return avgMetrics;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F0F0),
-      body: Stack(
-        children: [
-          // Curved background
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 200,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF48CAE4),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-            ),
-          ),
-          // Content
-          SafeArea(
-            child: Column(
-              children: [
-                // App Bar
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.black),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const Text(
-                        'Progress Tracking',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined,
-                            color: Colors.black),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const NotificationsPage(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                // Scrollable Content
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : StreamBuilder<List<SpeechSession>>(
-                          stream: _sessionService.getUserSessions(),
-                          builder: (context, snapshot) {
-                            if (_disposed) return const SizedBox.shrink();
-
-                            if (snapshot.hasError) {
-                              return Center(
-                                  child: Text('Error: ${snapshot.error}'));
-                            }
-
-                            if (!snapshot.hasData) {
-                              return const Center(
-                                  child: CircularProgressIndicator());
-                            }
-
-                            final sessions = snapshot.data!;
-                            final weeklyProgress = _getWeeklyProgress(sessions);
-                            final avgMetrics =
-                                _calculateAverageMetrics(sessions);
-
-                            return RefreshIndicator(
-                              onRefresh: _refreshData,
-                              child: SingleChildScrollView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 100),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 20),
-                                      _buildWeeklyProgress(weeklyProgress),
-                                      const SizedBox(height: 20),
-                                      _buildVRSessions(avgMetrics),
-                                      const SizedBox(height: 20),
-                                      _buildActivity(sessions),
-                                      const SizedBox(height: 20),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  void _showSessionDetails(SpeechSession session) {
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SessionDetailsSheet(session: session),
     );
   }
+}
 
-  Widget _buildWeeklyProgress(List<bool> weekProgress) {
+class WeeklyProgressSection extends StatelessWidget {
+  final List<SpeechSession> sessions;
+
+  const WeeklyProgressSection({super.key, required this.sessions});
+
+  List<bool> _getWeeklyProgress() {
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    return List.generate(7, (index) {
+      final date = startOfWeek.add(Duration(days: index));
+      return sessions.any((session) =>
+          session.timestamp.year == date.year &&
+          session.timestamp.month == date.month &&
+          session.timestamp.day == date.day);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final weekProgress = _getWeeklyProgress();
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -241,7 +295,6 @@ class _ProgressPageState extends State<ProgressPage> {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -266,11 +319,10 @@ class _ProgressPageState extends State<ProgressPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(7, (index) {
-                final isToday = now.weekday == index + 1;
-                return _buildDayCircle(
-                  dayNames[index],
-                  weekProgress[index],
-                  isSelected: isToday,
+                return DayProgressCircle(
+                  day: dayNames[index],
+                  completed: weekProgress[index],
+                  isSelected: now.weekday == index + 1,
                 );
               }),
             ),
@@ -279,9 +331,22 @@ class _ProgressPageState extends State<ProgressPage> {
       ),
     );
   }
+}
 
-  Widget _buildDayCircle(String day, bool completed,
-      {bool isSelected = false}) {
+class DayProgressCircle extends StatelessWidget {
+  final String day;
+  final bool completed;
+  final bool isSelected;
+
+  const DayProgressCircle({
+    super.key,
+    required this.day,
+    required this.completed,
+    required this.isSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       width: 40,
       child: Column(
@@ -322,8 +387,20 @@ class _ProgressPageState extends State<ProgressPage> {
       ),
     );
   }
+}
 
-  Widget _buildVRSessions(Map<String, double> metrics) {
+class PerformanceMetricsSection extends StatelessWidget {
+  final Map<String, double> metrics;
+  final VoidCallback onRefresh;
+
+  const PerformanceMetricsSection({
+    super.key,
+    required this.metrics,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -341,7 +418,7 @@ class _ProgressPageState extends State<ProgressPage> {
                 ),
               ),
               TextButton(
-                onPressed: _loadUserStats,
+                onPressed: onRefresh,
                 child: const Text('Refresh'),
               ),
             ],
@@ -351,8 +428,10 @@ class _ProgressPageState extends State<ProgressPage> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: metrics.entries
-                  .map((entry) =>
-                      _buildMetricCard(entry.key, entry.value.round()))
+                  .map((entry) => MetricCard(
+                        title: entry.key,
+                        percentage: entry.value.round(),
+                      ))
                   .toList(),
             ),
           ),
@@ -360,8 +439,20 @@ class _ProgressPageState extends State<ProgressPage> {
       ),
     );
   }
+}
 
-  Widget _buildMetricCard(String title, int percentage) {
+class MetricCard extends StatelessWidget {
+  final String title;
+  final int percentage;
+
+  const MetricCard({
+    super.key,
+    required this.title,
+    required this.percentage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: 150,
       height: 150,
@@ -441,8 +532,35 @@ class _ProgressPageState extends State<ProgressPage> {
       ),
     );
   }
+}
 
-  Widget _buildActivity(List<SpeechSession> sessions) {
+class RecentActivitySection extends StatelessWidget {
+  final List<SpeechSession> sessions;
+  final Function(SpeechSession) onSessionTap;
+
+  const RecentActivitySection({
+    super.key,
+    required this.sessions,
+    required this.onSessionTap,
+  });
+
+  String _getTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final recentSessions = sessions.take(5).toList();
 
     return Container(
@@ -471,48 +589,44 @@ class _ProgressPageState extends State<ProgressPage> {
             ],
           ),
           const SizedBox(height: 16),
-          ...recentSessions.map((session) {
-            final timeAgo = _getTimeAgo(session.timestamp);
-            return _buildActivityItem(
-              icon: Icons.record_voice_over,
-              title: 'Completed "${session.topic}" Session',
-              subtitle: timeAgo,
-              onTap: () => _showSessionDetails(session),
-            );
-          }),
           if (recentSessions.isEmpty)
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text('No recent activity'),
               ),
-            ),
+            )
+          else
+            ...recentSessions.map((session) {
+              return ActivityItem(
+                icon: Icons.record_voice_over,
+                title: 'Completed "${session.topic}" Session',
+                subtitle: _getTimeAgo(session.timestamp),
+                onTap: () => onSessionTap(session),
+              );
+            }),
         ],
       ),
     );
   }
+}
 
-  String _getTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
+class ActivityItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
-    if (difference.inDays > 0) {
-      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
-    } else {
-      return 'Just now';
-    }
-  }
+  const ActivityItem({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
-  Widget _buildActivityItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    VoidCallback? onTap,
-  }) {
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: Material(
@@ -579,108 +693,117 @@ class _ProgressPageState extends State<ProgressPage> {
       ),
     );
   }
+}
 
-  void _showSessionDetails(SpeechSession session) {
-    if (!mounted) return;
+class SessionDetailsSheet extends StatelessWidget {
+  final SpeechSession session;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        maxChildSize: 0.9,
-        minChildSize: 0.5,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        session.topic,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+  const SessionDetailsSheet({
+    super.key,
+    required this.session,
+  });
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.9,
+      maxChildSize: 0.9,
+      minChildSize: 0.5,
+      builder: (context, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      session.topic,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Session Date: ${DateFormat('MMM d, y').format(session.timestamp)}',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                Text(
+                  'Duration: ${_formatDuration(session.duration)}',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Speech Content',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  session.speechText,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Performance Metrics',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildMetricsGrid(session.metrics),
+                const SizedBox(height: 24),
+                const Text(
+                  'Feedback',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...session.feedback.map((feedback) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle,
+                            color: Color(0xFF48CAE4),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              feedback,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Session Date: ${DateFormat('MMM d, y').format(session.timestamp)}',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                  Text(
-                    'Duration: ${_formatDuration(session.duration)}',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Speech Content',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    session.speechText,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Performance Metrics',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMetricsGrid(session.metrics),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Feedback',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...session.feedback.map((feedback) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              color: Color(0xFF48CAE4),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                feedback,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )),
-                ],
-              ),
+                    )),
+              ],
             ),
           ),
         ),
@@ -731,12 +854,6 @@ class _ProgressPageState extends State<ProgressPage> {
         );
       },
     );
-  }
-
-  String _formatDuration(int seconds) {
-    final minutes = seconds ~/ 60;
-    final remainingSeconds = seconds % 60;
-    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 }
 
