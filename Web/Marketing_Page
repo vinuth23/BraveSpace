@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BraveSpace - Virtual Reality Therapy for children aged 7-12 to overcome social anxiety.">
+    <title>BraveSpace - Virtual Reality Therapy</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="hero">
+        <nav>
+            <div class="logo">
+                <!-- Insert Logo Image Here -->
+                <img src="logo.png" alt="BraveSpace Logo" loading="lazy">
+            </div>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#contact">Contact Us</a></li>
+            </ul>
+        </nav>
+        <div class="hero-content">
+            <h1>Empowering Kids Through Virtual Reality Therapy</h1>
+            <p>BraveSpace - Virtual Reality App designed to help children aged 7-12 overcome social anxiety.</p>
+            <a href="#features" class="cta-button">Discover More</a>
+        </div>
+        <!-- Insert Hero Background Image Here -->
+    </header>
+    
+    <section id="features" class="fade-in">
+        <h2>Our Unique Features</h2>
+        <p>BraveSpace provides innovative solutions to support children's social development through VR therapy.</p>
+        <div class="features-grid">
+            <div class="feature-item">
+                <!-- Insert Feature Image 1 Here -->
+                <img src="feature1.png" alt="Customizable Avatars" loading="lazy">
+                <p>Customizable Avatars</p>
+            </div>
+            <div class="feature-item">
+                <!-- Insert Feature Image 2 Here -->
+                <img src="feature2.png" alt="Progress Tracking System" loading="lazy">
+                <p>Progress Tracking System</p>
+            </div>
+            <div class="feature-item">
+                <!-- Insert Feature Image 3 Here -->
+                <img src="feature3.png" alt="Realistic Social Games" loading="lazy">
+                <p>Realistic Social Games</p>
+            </div>
+        </div>
+    </section>
+    
+    <section id="about" class="fade-in">
+        <div class="about-content">
+            <!-- Insert About Section Image Here -->
+            <img src="about.png" alt="VR Therapy for Kids" loading="lazy">
+            <div class="about-text">
+                <h2>Innovative VR Therapy for Kids</h2>
+                <p>BraveSpace is at the forefront of digital therapy, using cutting-edge Virtual Reality technology to help children aged 7-12 overcome social anxiety...</p>
+            </div>
+        </div>
+    </section>
+    
+    <section id="why-choose" class="fade-in">
+        <h2>Why Choose BraveSpace?</h2>
+        <div class="why-grid">
+            <div><span>01.</span> Innovative VR Technology</div>
+            <div><span>02.</span> Tailored For Kids</div>
+            <div><span>03.</span> Proven Results</div>
+        </div>
+    </section>
+    
+    <section id="contact" class="fade-in">
+        <h2>Contact Us</h2>
+        <p>Get in touch with BraveSpace for inquiries, support, or feedback.</p>
+        <div class="contact-details">
+            <p><strong>Location:</strong> Colombo 02, Sri Lanka</p>
+            <p><strong>Phone:</strong> +94 77 648 9690</p>
+            <p><strong>Email:</strong> <a href="mailto:contact@bravespace.com">contact@bravespace.com</a></p>
+            <p><strong>Hours:</strong> Mon-Fri: 8 AM - 6 PM, Sat: 10 AM - 4 PM, Sun: Closed</p>
+        </div>
+        <!-- Insert Google Map Here -->
+        <div class="map-placeholder">
+            <img src="map-placeholder.png" alt="Google Map Placeholder" loading="lazy">
+        </div>
+    </section>
+    
+    <section id="faq" class="fade-in">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-grid">
+            <div class="faq-item">What age group is BraveSpace designed for?</div>
+            <div class="faq-item">How does VR therapy help with social anxiety?</div>
+            <div class="faq-item">What features does the app include for parents and therapists?</div>
+            <div class="faq-item">Is the software easy to use?</div>
+        </div>
+    </section>
+      
+    <footer class="fade-in">
+        <!-- Insert Footer Background Image Here -->
+        <h2>Start Your Child's Journey to Confidence</h2>
+        <p>Take the first step towards helping your child overcome social anxiety with BraveSpace.</p>
+        <a href="#" class="cta-button">Discover More</a>
+        <p>&copy; 2025 BraveSpace</p>
+    </footer>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let fadeIns = document.querySelectorAll(".fade-in");
+            let observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            fadeIns.forEach(section => observer.observe(section));
+        });
+    </script>
+</body>
+</html>
