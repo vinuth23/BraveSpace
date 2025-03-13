@@ -40,13 +40,31 @@ const storage = new Storage({
 });
 const bucketName = 'bravespace-speech-files';
 
+// Load environment variables
+require('dotenv').config();
+
+// Constants
+const PORT = process.env.PORT || 3000;
+const FIREBASE_CONFIG = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID
+};
+
 // Whisper API configuration
-const WHISPER_API_URL = process.env.WHISPER_API_URL || 'https://api.openai.com/v1/audio/transcriptions';
-const WHISPER_API_KEY = process.env.WHISPER_API_KEY || 'your-openai-api-key'; // Replace with your actual API key or use environment variable
-const IS_SELF_HOSTED_WHISPER = WHISPER_API_URL.includes('/asr');
+const IS_SELF_HOSTED_WHISPER = process.env.IS_SELF_HOSTED_WHISPER === 'true';
+// Use localhost for local development, whisper-server for Docker
+const WHISPER_API_URL = process.env.WHISPER_API_URL || 'http://localhost:9000/asr';
+const WHISPER_API_KEY = process.env.WHISPER_API_KEY || '';
+
+console.log('Whisper API URL:', WHISPER_API_URL);
+console.log('Is self-hosted Whisper:', IS_SELF_HOSTED_WHISPER);
 
 const app = express();
-const port = 3000;
 
 // Middleware to parse JSON request bodies
 app.use(bodyParser.json());
@@ -528,34 +546,42 @@ app.get("/api/speech/progress", verifyToken, async (req, res) => {
   }
 });
 
-// Test endpoint for speech analysis (no authentication required)
-app.post("/api/test/speech/upload", upload.single('audio'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No audio file provided" });
-  }
-
+// Test endpoint for speech analysis (no auth required)
+app.post('/api/test/speech/upload', upload.single('audio'), async (req, res) => {
   try {
-    // 1. Upload file to Google Cloud Storage (skip for testing)
+    console.log('Test endpoint called');
+    
+    if (!req.file) {
+      console.error('No file uploaded');
+      return res.status(400).json({ 
+        status: 400,
+        message: 'No file uploaded',
+        data: null
+      });
+    }
+    
     const filePath = req.file.path;
+    console.log('File uploaded to:', filePath);
     
-    // 2. Transcribe audio using Whisper API
-    const transcriptionData = await transcribeAudio(filePath);
+    // Analyze the speech
+    const result = await analyzeSpeech(filePath);
     
-    // 3. Analyze speech for metrics
-    const analysis = await analyzeSpeech(filePath);
+    // Clean up the uploaded file
+    try {
+      fs.unlinkSync(filePath);
+    } catch (error) {
+      console.error('Error deleting uploaded file:', error);
+    }
     
-    // 4. Clean up local files
-    fs.unlinkSync(filePath);
-    
-    res.json({
-      message: "Speech analysis completed successfully",
-      transcript: transcriptionData.text,
-      analysis,
-    });
-    
+    // Return the analysis results
+    return res.status(result.status).json(result);
   } catch (error) {
-    console.error("Error processing speech:", error);
-    res.status(500).json({ error: "Error processing speech: " + error.message });
+    console.error('Error in test speech upload endpoint:', error);
+    return res.status(500).json({
+      status: 500,
+      message: 'Server error processing speech',
+      data: null
+    });
   }
 });
 
@@ -583,6 +609,7 @@ async function transcribeAudio(audioFilePath) {
       formData.append('encode', 'true');
       
       try {
+        console.log('Sending request to Whisper server at:', WHISPER_API_URL);
         const response = await axios.post(WHISPER_API_URL, formData, {
           headers: formData.getHeaders(),
         });
@@ -590,37 +617,32 @@ async function transcribeAudio(audioFilePath) {
         console.log('Whisper response:', response.data);
         
         // Self-hosted Whisper response format is different
-        // It might just return a text field without segments
-        const text = response.data.text || '';
+        // It might just return the text directly as a string
+        let text = '';
         
-        // Create a simple segments array if none exists
-        let segments = [];
-        if (response.data.segments && Array.isArray(response.data.segments)) {
-          segments = response.data.segments.map(segment => ({
-            id: segment.id || 0,
-            start: segment.start || 0,
-            end: segment.end || 0,
-            text: segment.text || '',
-            words: segment.words ? segment.words.map(word => ({
-              word: word.text || '',
-              start: word.start || 0,
-              end: word.end || 0
-            })) : []
-          }));
-        } else {
-          // If no segments, create a simple one with the full text
-          segments = [{
-            id: 0,
-            start: 0,
-            end: 1,
-            text: text,
-            words: text.split(' ').map((word, i) => ({
-              word: word,
-              start: i * 0.5,
-              end: (i + 1) * 0.5
-            }))
-          }];
+        // Check if response.data is a string (direct transcription)
+        if (typeof response.data === 'string') {
+          text = response.data;
+        } 
+        // Check if response.data is an object with a text property
+        else if (response.data && typeof response.data.text === 'string') {
+          text = response.data.text;
         }
+        
+        console.log('Extracted text:', text);
+        
+        // Create a simple segments array with the full text
+        const segments = [{
+          id: 0,
+          start: 0,
+          end: 1,
+          text: text,
+          words: text.split(' ').map((word, i) => ({
+            word: word,
+            start: i * 0.5,
+            end: (i + 1) * 0.5
+          }))
+        }];
         
         return { text, segments };
       } catch (error) {
@@ -798,6 +820,6 @@ async function analyzeSpeech(audioFilePath) {
 }
 
 // Server listening
-app.listen(3000, '0.0.0.0', () => {
-  console.log('Server running on http://0.0.0.0:3000');
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('Server running on http://0.0.0.0:' + PORT);
 });

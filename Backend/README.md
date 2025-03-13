@@ -1,104 +1,107 @@
-# BraveSpace Speech Analysis Backend
+# BraveSpace Speech Analysis API
 
-This backend service provides speech analysis capabilities for the BraveSpace application using OpenAI's Whisper model for speech-to-text transcription.
+This is the backend service for the BraveSpace platform, which provides speech analysis functionality for improving public speaking skills.
 
-## Setup Options
+## Features
 
-You have two options for setting up the speech recognition service:
+- Speech transcription using Whisper ASR
+- Speech analysis for metrics like word count, sentence structure, etc.
+- API endpoints for uploading and analyzing speech recordings
+- Docker containerization for easy deployment
 
-### Option 1: Using OpenAI's Whisper API (Requires API Key)
+## Prerequisites
 
-1. Sign up for an OpenAI API key at [https://platform.openai.com/](https://platform.openai.com/)
-2. Set your API key as an environment variable:
-   ```
-   export WHISPER_API_KEY=your-openai-api-key
-   ```
-3. Install dependencies:
-   ```
-   npm install
-   ```
-4. Start the server:
-   ```
-   npm start
-   ```
+- [Docker](https://www.docker.com/products/docker-desktop/)
+- [Node.js](https://nodejs.org/) (for local development)
+- [npm](https://www.npmjs.com/) (comes with Node.js)
 
-### Option 2: Self-Hosted Whisper (Free, Requires GPU)
+## Setup
 
-1. Make sure you have Docker and Docker Compose installed
-2. For GPU support, ensure you have NVIDIA Container Toolkit installed:
+1. Clone the repository
+2. Navigate to the Backend directory
+3. Create a `.env` file with the following variables:
    ```
-   # For Ubuntu
-   sudo apt-get install -y nvidia-container-toolkit
-   sudo systemctl restart docker
+   PORT=3000
+   IS_SELF_HOSTED_WHISPER=true
+   WHISPER_API_URL=http://localhost:9000/asr
+   WHISPER_API_KEY=not-needed-for-local
    ```
-3. Start the services:
+4. Start the Docker containers:
    ```
    docker-compose up -d
    ```
 
-This will start both the Node.js backend and a self-hosted Whisper server.
-
-## Environment Variables
-
-- `WHISPER_API_URL`: URL for the Whisper API (defaults to OpenAI's endpoint)
-- `WHISPER_API_KEY`: API key for OpenAI (not needed for self-hosted option)
-- `PORT`: Port to run the server on (defaults to 3000)
-
 ## API Endpoints
 
-### POST /api/speech/upload
+### Test Speech Analysis (No Authentication Required)
 
-Uploads an audio file for transcription and analysis.
-
-**Request:**
-- Headers:
-  - `Authorization: Bearer <token>` - Firebase auth token
-- Body:
-  - `audio` - Audio file (WAV, MP3, etc.)
-
-**Response:**
-```json
-{
-  "message": "Speech analysis completed successfully",
-  "sessionId": "uuid",
-  "transcript": "Transcribed text",
-  "analysis": {
-    "overallScore": 85,
-    "confidenceScore": 90,
-    "grammarScore": 80,
-    "clarityScore": 85,
-    "speechRate": 145.5,
-    "fillerWordCount": 3,
-    "pauseCount": 2,
-    "grammarIssues": [],
-    "feedback": [
-      "Your speaking rate of 145.5 words per minute is excellent!"
-    ]
+- **URL**: `/api/test/speech/upload`
+- **Method**: `POST`
+- **Content-Type**: `multipart/form-data`
+- **Request Body**:
+  - `audio`: Audio file (WAV, MP3, etc.)
+- **Response**:
+  ```json
+  {
+    "status": 200,
+    "message": "Speech analysis completed successfully",
+    "data": {
+      "transcript": "Transcribed text...",
+      "overallScore": 80,
+      "confidenceScore": 75,
+      "feedback": "Feedback on speech...",
+      "detailedAnalysis": [
+        {
+          "category": "Length",
+          "score": 90,
+          "feedback": "Speech contains X words."
+        },
+        {
+          "category": "Structure",
+          "score": 85,
+          "feedback": "Average of Y words per sentence."
+        }
+      ]
+    }
   }
-}
-```
+  ```
 
-### GET /api/speech/sessions
+### Authenticated Speech Analysis
 
-Retrieves all speech analysis sessions for the authenticated user.
+- **URL**: `/api/speech/upload`
+- **Method**: `POST`
+- **Content-Type**: `multipart/form-data`
+- **Headers**:
+  - `Authorization`: `Bearer <firebase-auth-token>`
+- **Request Body**:
+  - `audio`: Audio file (WAV, MP3, etc.)
+  - `title`: Title of the speech (optional)
+  - `description`: Description of the speech (optional)
+- **Response**: Same as the test endpoint
 
-### GET /api/speech/sessions/:id
+## Testing
 
-Retrieves detailed information about a specific speech analysis session.
+1. Generate a test audio file:
+   ```
+   node generate-test-audio.js
+   ```
+2. Test the speech analysis API:
+   ```
+   node test-speech-api.js test-audio.wav
+   ```
 
-### GET /api/speech/progress
+## Architecture
 
-Retrieves progress data over time for the authenticated user.
+- **Backend**: Node.js with Express.js
+- **Speech Recognition**: Self-hosted Whisper ASR server
+- **Authentication**: Firebase Authentication
+- **Database**: Firestore (for storing user data and speech analysis results)
 
-## Troubleshooting
+## Docker Services
 
-### Self-Hosted Whisper Issues
+- **backend**: Node.js backend service
+- **whisper-server**: Self-hosted Whisper ASR server
 
-- If you encounter GPU memory issues, try using a smaller model by changing `ASR_MODEL=base` to `ASR_MODEL=tiny` in the docker-compose.yml file.
-- For CPU-only deployment (much slower), remove the `deploy` section from the docker-compose.yml file.
+## License
 
-### OpenAI API Issues
-
-- Check your API key and usage limits on the OpenAI dashboard.
-- Ensure your audio files are in a supported format (MP3, WAV, etc.).
-- The backend automatically converts audio to MP3 format before sending to the API. 
+This project is licensed under the MIT License - see the LICENSE file for details. 

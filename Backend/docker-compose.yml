@@ -11,10 +11,13 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=production
-      - WHISPER_API_URL=http://whisper-server:9000/asr
+      - WHISPER_API_URL=http://localhost:9000/asr
       - WHISPER_API_KEY=not-needed-for-local
+      - IS_SELF_HOSTED_WHISPER=true
     depends_on:
       - whisper-server
+    networks:
+      - app-network
 
   # Whisper ASR server
   whisper-server:
@@ -26,6 +29,12 @@ services:
       - ASR_ENGINE=openai_whisper
     volumes:
       - whisper-data:/root/.cache
+    networks:
+      - app-network
 
 volumes:
   whisper-data: 
+
+networks:
+  app-network:
+    driver: bridge 
