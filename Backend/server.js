@@ -528,6 +528,37 @@ app.get("/api/speech/progress", verifyToken, async (req, res) => {
   }
 });
 
+// Test endpoint for speech analysis (no authentication required)
+app.post("/api/test/speech/upload", upload.single('audio'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No audio file provided" });
+  }
+
+  try {
+    // 1. Upload file to Google Cloud Storage (skip for testing)
+    const filePath = req.file.path;
+    
+    // 2. Transcribe audio using Whisper API
+    const transcriptionData = await transcribeAudio(filePath);
+    
+    // 3. Analyze speech for metrics
+    const analysis = await analyzeSpeech(transcriptionData.text, transcriptionData.segments);
+    
+    // 4. Clean up local files
+    fs.unlinkSync(filePath);
+    
+    res.json({
+      message: "Speech analysis completed successfully",
+      transcript: transcriptionData.text,
+      analysis,
+    });
+    
+  } catch (error) {
+    console.error("Error processing speech:", error);
+    res.status(500).json({ error: "Error processing speech: " + error.message });
+  }
+});
+
 // Helper function to transcribe audio using Whisper
 async function transcribeAudio(audioFilePath) {
   const mp3FilePath = `${audioFilePath}.mp3`;
@@ -545,48 +576,65 @@ async function transcribeAudio(audioFilePath) {
   
   const formData = new FormData();
   
-  if (IS_SELF_HOSTED_WHISPER) {
-    // Self-hosted Whisper server format
-    formData.append('audio_file', fs.createReadStream(mp3FilePath));
-    formData.append('encode', 'true');
-    
-    const response = await axios.post(WHISPER_API_URL, formData, {
-      headers: formData.getHeaders(),
-    });
-    
-    // Self-hosted Whisper response format is different
+  try {
+    if (IS_SELF_HOSTED_WHISPER) {
+      // Self-hosted Whisper server format
+      formData.append('audio_file', fs.createReadStream(mp3FilePath));
+      formData.append('encode', 'true');
+      
+      const response = await axios.post(WHISPER_API_URL, formData, {
+        headers: formData.getHeaders(),
+      });
+      
+      // Self-hosted Whisper response format is different
+      return {
+        text: response.data.text || '',
+        segments: response.data.segments ? response.data.segments.map(segment => ({
+          id: segment.id,
+          start: segment.start,
+          end: segment.end,
+          text: segment.text,
+          words: segment.words ? segment.words.map(word => ({
+            word: word.text,
+            start: word.start,
+            end: word.end
+          })) : []
+        })) : []
+      };
+    } else {
+      // OpenAI API format
+      formData.append('file', fs.createReadStream(mp3FilePath), {
+        filename: path.basename(mp3FilePath),
+        contentType: 'audio/mpeg',
+      });
+      formData.append('model', 'whisper-1');
+      formData.append('response_format', 'verbose_json');
+      formData.append('language', 'en');
+      
+      const response = await axios.post(WHISPER_API_URL, formData, {
+        headers: {
+          ...formData.getHeaders(),
+          'Authorization': `Bearer ${WHISPER_API_KEY}`,
+        },
+      });
+      
+      return {
+        text: response.data.text || '',
+        segments: response.data.segments || []
+      };
+    }
+  } catch (error) {
+    console.error('Error in transcribeAudio:', error.message);
+    // Return a default structure in case of error
     return {
-      text: response.data.text,
-      segments: response.data.segments.map(segment => ({
-        id: segment.id,
-        start: segment.start,
-        end: segment.end,
-        text: segment.text,
-        words: segment.words ? segment.words.map(word => ({
-          word: word.text,
-          start: word.start,
-          end: word.end
-        })) : null
-      }))
+      text: 'Error transcribing audio',
+      segments: []
     };
-  } else {
-    // OpenAI API format
-    formData.append('file', fs.createReadStream(mp3FilePath), {
-      filename: path.basename(mp3FilePath),
-      contentType: 'audio/mpeg',
-    });
-    formData.append('model', 'whisper-1');
-    formData.append('response_format', 'verbose_json');
-    formData.append('language', 'en');
-    
-    const response = await axios.post(WHISPER_API_URL, formData, {
-      headers: {
-        ...formData.getHeaders(),
-        'Authorization': `Bearer ${WHISPER_API_KEY}`,
-      },
-    });
-    
-    return response.data;
+  } finally {
+    // Clean up the MP3 file
+    if (fs.existsSync(mp3FilePath)) {
+      fs.unlinkSync(mp3FilePath);
+    }
   }
 }
 
