@@ -1,0 +1,2 @@
+C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/.cxx/Debug/5r4x523h/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/.cxx/Debug/5r4x523h/x86_64/CMakeFiles/rebuild_cache.dir
