@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  # Node.js backend service
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
+      - WHISPER_API_URL=http://localhost:9000/asr
+      - WHISPER_API_KEY=not-needed-for-local
+      - IS_SELF_HOSTED_WHISPER=true
+    depends_on:
+      - whisper-server
+    networks:
+      - app-network
+
+  # Whisper ASR server
+  whisper-server:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - ASR_MODEL=tiny
+      - ASR_ENGINE=openai_whisper
+    volumes:
+      - whisper-data:/root/.cache
+    networks:
+      - app-network
+
+volumes:
+  whisper-data: 
+
+networks:
+  app-network:
+    driver: bridge 
