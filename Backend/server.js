@@ -13,6 +13,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
+require('dotenv').config();
 
 // Set ffmpeg path
 ffmpeg.setFfmpegPath(ffmpegPath);

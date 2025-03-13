@@ -22,17 +22,10 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - ASR_MODEL=base
+      - ASR_MODEL=tiny
       - ASR_ENGINE=openai_whisper
     volumes:
       - whisper-data:/root/.cache
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 
 volumes:
   whisper-data: 
