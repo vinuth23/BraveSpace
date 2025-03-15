@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/avatar_customization_page.dart';
 import 'activity_history_page.dart';
 import 'goals_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -247,7 +248,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     _buildMenuItem(
                       icon: Icons.person_outline,
                       title: 'Avatar customization',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AvatarCustomizationPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildMenuItem(
                       icon: Icons.leaderboard_outlined,
