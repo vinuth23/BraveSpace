@@ -422,3 +422,52 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               ),
             ),
           ),
+
+          // Bottom navigation bar
+          Container(
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                const Icon(Icons.home_outlined),
+                const Icon(Icons.notifications_outlined),
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.3),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.black,
+                    size: 28,
+                  ),
+                ),
+                const Icon(Icons.access_time),
+                const Icon(Icons.person_outline),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
