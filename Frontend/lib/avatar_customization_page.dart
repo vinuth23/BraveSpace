@@ -375,3 +375,50 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                   ],
                   
                   const SizedBox(height: 24),
+
+                  // Action buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: saveAvatar,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5ECCE9),
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(150, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        child: const Text(
+                          'Save Avatar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: resetChanges,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(150, 50),
+                          side: const BorderSide(color: Colors.black),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        child: const Text(
+                          'Reset Changes',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
