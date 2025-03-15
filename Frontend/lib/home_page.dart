@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'notifications_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'vr_sessions_page.dart';
 import 'main.dart';
 
 class HomePage extends StatefulWidget {
