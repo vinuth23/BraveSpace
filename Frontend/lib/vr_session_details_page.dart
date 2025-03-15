@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import 'notifications_page.dart';
 
-class VRSessionDetailsPage extends StatelessWidget {
+class VRSessionDetailsPage extends StatefulWidget {
   const VRSessionDetailsPage({super.key});
+
+  @override
+  VRSessionDetailsPageState createState() => VRSessionDetailsPageState();
+}
+
+class VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
+  String videoUrl =
+      "https://your-cloud-storage-link.com/video.mp4"; // Replace with backend URL
+
+  void _playVideo(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +77,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Intermediate',
+                            'Beginner',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -76,7 +94,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                         ],
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () => _playVideo(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
@@ -87,8 +105,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          // Add this side parameter for the border
-                          side: BorderSide(
+                          side: const BorderSide(
                             color: Colors.grey,
                             width: 1.0,
                           ),
@@ -167,6 +184,49 @@ class VRSessionDetailsPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+  const VideoPlayerScreen({super.key, required this.videoUrl});
+
+  @override
+  _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(widget.videoUrl)
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("VR Video")),
+      body: Center(
+        child: _controller.value.isInitialized
+            ? AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: VideoPlayer(_controller),
+              )
+            : const CircularProgressIndicator(),
       ),
     );
   }

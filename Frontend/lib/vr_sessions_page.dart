@@ -75,13 +75,6 @@ class VRSessionsPage extends StatelessWidget {
                           image: 'assets/images/beginner.webp',
                           title: 'Beginner',
                           subtitle: '14 Days . 6 days per week',
-                          onTap: () {},
-                        ),
-                        const SizedBox(height: 16),
-                        _SessionCard(
-                          image: 'assets/images/intermediate.jpeg',
-                          title: 'Intermediate',
-                          subtitle: '28 Days . 2-4 days per week',
                           onTap: () {
                             Navigator.push(
                               context,
@@ -91,6 +84,13 @@ class VRSessionsPage extends StatelessWidget {
                               ),
                             );
                           },
+                        ),
+                        const SizedBox(height: 16),
+                        _SessionCard(
+                          image: 'assets/images/intermediate.jpeg',
+                          title: 'Intermediate',
+                          subtitle: '28 Days . 2-4 days per week',
+                          onTap: () {},
                         ),
                         const SizedBox(height: 16),
                         _SessionCard(
@@ -243,7 +243,7 @@ class _SessionCard extends StatelessWidget {
                       height: 20,
                     ),
                   ),
-                  label: const Text('Play'),
+                  label: const Text('Open'),
                 ),
               ],
             ),
