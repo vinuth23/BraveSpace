@@ -142,5 +142,102 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
           ),
 
+           // App header with back button and title
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_ios, size: 24),
+                  onPressed: () {
+                    // Handle back button press
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Back button pressed'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const Text(
+                  'Achievements',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Main content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Unlocked achievements section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Unlocked Achievements',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFA07A), // Light salmon color
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Total Points: $totalPoints',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Unlocked achievement cards
+                  ...unlockedAchievements.map((achievement) => 
+                    _buildAchievementCard(achievement)
+                  ).toList(),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Locked achievements section
+                  const Text(
+                    'Locked Achievements',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Locked achievement cards
+                  ...lockedAchievements.map((achievement) => 
+                    _buildAchievementCard(achievement)
+                  ).toList(),
+                  
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+
+
+
+
 
 
