@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/achivements_page.dart';
 import 'package:flutter_application_1/avatar_customization_page.dart';
 import 'activity_history_page.dart';
 import 'goals_page.dart';
@@ -265,7 +266,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     _buildMenuItem(
                       icon: Icons.emoji_events_outlined,
                       title: 'Achievements',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AchivementsPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildMenuItem(
                       icon: Icons.history_outlined,
