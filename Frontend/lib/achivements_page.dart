@@ -236,6 +236,167 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
           ),
 
+           // Bottom navigation bar
+          Container(
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.home_outlined),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Home button pressed'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Notifications button pressed'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                ),
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.3),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.camera_alt,
+                      color: Colors.black,
+                      size: 28,
+                    ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Camera button pressed'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.access_time),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Timer button pressed'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.person_outline),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profile button pressed'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAchievementCard(Achievement achievement) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF90CAF9).withOpacity(0.5), // Light blue color
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(
+              achievement.icon,
+              size: 28,
+              color: achievement.isUnlocked ? Colors.black : Colors.black54,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    achievement.title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: achievement.isUnlocked ? Colors.black : Colors.black54,
+                    ),
+                  ),
+                  Text(
+                    achievement.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: achievement.isUnlocked ? Colors.black87 : Colors.black45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: achievement.isUnlocked 
+                    ? const Color(0xFFFF7F50) // Coral color for unlocked
+                    : const Color(0xFFFF7F50).withOpacity(0.7), // Faded coral for locked
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${achievement.points} pts',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: achievement.isUnlocked ? Colors.black : Colors.black54,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
 
 
 
