@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
@@ -149,11 +150,16 @@ class _ProgressPageState extends State<ProgressPage>
         setState(() {
           _speechSessions = data['sessions'] ?? [];
           _speechAnalysisLoading = false;
-          _speechAnalysisError = 'Database index missing. Using sample data.';
-        });
 
-        // Log the index URL for admin
-        print('Firestore index URL: ${data['indexUrl']}');
+          if (data['indexUrl'] != null) {
+            _speechAnalysisError =
+                'Database index missing. Click here to create it: ${data['indexUrl']}';
+            // Log the URL for easy access
+            print('FIREBASE INDEX URL: ${data['indexUrl']}');
+          } else {
+            _speechAnalysisError = 'Database index missing. Using sample data.';
+          }
+        });
       } else {
         setState(() {
           _speechAnalysisLoading = false;
@@ -191,6 +197,12 @@ class _ProgressPageState extends State<ProgressPage>
         // Check if we're using mock data
         if (data['mockData'] == true) {
           _usingMockProgressData = true;
+
+          // Check if there's an index URL
+          if (data['indexUrl'] != null) {
+            print('FIREBASE PROGRESS INDEX URL: ${data['indexUrl']}');
+          }
+
           // We don't need to show an error for this, just log it
           print('Using mock progress data: ${data['error']}');
         } else {
@@ -288,10 +300,27 @@ class _ProgressPageState extends State<ProgressPage>
                 const Icon(Icons.info_outline, color: Colors.amber),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    _speechAnalysisError,
-                    style: TextStyle(color: Colors.amber.shade900),
-                  ),
+                  child: _speechAnalysisError.contains('http')
+                      ? GestureDetector(
+                          onTap: () {
+                            final urlMatch = RegExp(r'(https?://[^\s]+)')
+                                .firstMatch(_speechAnalysisError);
+                            if (urlMatch != null) {
+                              _launchURL(urlMatch.group(0)!);
+                            }
+                          },
+                          child: Text(
+                            _speechAnalysisError,
+                            style: TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          _speechAnalysisError,
+                          style: TextStyle(color: Colors.amber.shade900),
+                        ),
                 ),
               ],
             ),
@@ -910,6 +939,14 @@ class _ProgressPageState extends State<ProgressPage>
         ),
       ),
     );
+  }
+
+  // Helper method to launch URLs
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await url_launcher.launchUrl(url)) {
+      print('Could not launch $url');
+    }
   }
 }
 

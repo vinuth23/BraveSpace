@@ -517,9 +517,13 @@ app.get("/api/speech/sessions", verifyToken, async (req, res) => {
         // Check if this is an index error
         if (error.code === 9 && error.message.includes('index')) {
           console.error("Firestore index error:", error.message);
+          
           // Extract the URL if it exists in the error message
-          const urlMatch = error.message.match(/(https:\/\/console\.firebase\.google\.com\S+)/);
+          // The URL is typically in the format: https://console.firebase.google.com/v1/r/project/...
+          const urlMatch = error.message.match(/(https:\/\/console\.firebase\.google\.com[^\s"]+)/);
           const indexUrl = urlMatch ? urlMatch[1] : null;
+          
+          console.log("Firebase Index Creation URL:", indexUrl);
           
           throw {
             code: 'MISSING_INDEX',
@@ -609,7 +613,18 @@ app.get("/api/speech/progress", verifyToken, async (req, res) => {
         // Check if this is an index error
         if (error.code === 9 && error.message.includes('index')) {
           console.error("Firestore index error:", error.message);
-          throw new Error("Missing Firestore index");
+          
+          // Extract the URL if it exists in the error message
+          const urlMatch = error.message.match(/(https:\/\/console\.firebase\.google\.com[^\s"]+)/);
+          const indexUrl = urlMatch ? urlMatch[1] : null;
+          
+          console.log("Firebase Index Creation URL (Progress):", indexUrl);
+          
+          throw {
+            code: 'MISSING_INDEX',
+            message: 'The query requires a Firestore index',
+            indexUrl: indexUrl
+          };
         }
         throw error;
       });
@@ -635,6 +650,17 @@ app.get("/api/speech/progress", verifyToken, async (req, res) => {
     res.json({ progress: progressData });
   } catch (error) {
     console.error("Error fetching progress data:", error);
+    
+    // If it's a missing index error, provide helpful information
+    if (error.code === 'MISSING_INDEX') {
+      return res.json({ 
+        progress: getMockProgressData(),
+        mockData: true,
+        error: "Missing Firestore index",
+        message: "The database query requires an index to be created. Please follow the link to create it.",
+        indexUrl: error.indexUrl
+      });
+    }
     
     // Return mock progress data instead of error
     res.json({ 
