@@ -13,6 +13,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
+const mongoose = require("mongoose");
 require('dotenv').config();
 
 // Set ffmpeg path
@@ -63,12 +64,6 @@ const WHISPER_API_KEY = process.env.WHISPER_API_KEY || '';
 
 console.log('Whisper API URL:', WHISPER_API_URL);
 console.log('Is self-hosted Whisper:', IS_SELF_HOSTED_WHISPER);
-const cors = require("cors");
-const mongoose = require("mongoose");
-const multer = require("multer");
-const { Storage } = require("@google-cloud/storage");
-const path = require("path");
-require("dotenv").config(); // Load environment variables
 
 const app = express();
 
@@ -83,31 +78,36 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+const bucket = storage.bucket(bucketName);
+
+// MongoDB connection
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // Middleware to verify the ID token
 function verifyToken(req, res, next) {
   const idToken = req.headers.authorization?.split('Bearer ')[1];
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  
+  if (!idToken) {
+    return res.status(401).json({ error: "No token provided" });
+  }
 
-// Google Cloud Storage setup
-const storage = new Storage({ keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS });
-const bucket = storage.bucket("your-gcs-bucket-name"); // Replace with your actual bucket name
-
-// Multer storage config for file uploads
-const upload = multer({
-  storage: multer.memoryStorage(),
-});
+  admin.auth().verifyIdToken(idToken)
+    .then(decodedToken => {
+      req.user = decodedToken;
+      next();
+    })
+    .catch(error => {
+      res.status(401).json({ error: "Invalid token" });
+    });
+}
 
 // Upload VR video route (Developer uploads)
 app.post("/upload/vr-video", upload.single("video"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-  res.json({
-    message: `Hello, user with UID: ${userId}`,
   const blob = bucket.file(`vr_videos/${Date.now()}_${req.file.originalname}`);
   const blobStream = blob.createWriteStream({ resumable: false });
 
@@ -190,6 +190,9 @@ app.get("/protected-route", verifyToken, (req, res) => {
   res.json({
     message: "This is a protected route",
     user: req.user,
+  });
+});
+
 // Upload Avatar route (Developer uploads)
 app.post("/upload/avatar", upload.single("avatar"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
@@ -845,9 +848,6 @@ async function analyzeSpeech(audioFilePath) {
   }
 }
 
-// Server listening
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('Server running on http://0.0.0.0:' + PORT);
 // Retrieve VR videos (User fetches from frontend)
 app.get("/vr-videos", async (req, res) => {
   try {
@@ -871,8 +871,8 @@ app.get("/avatars", async (req, res) => {
 });
 
 // Start the server
-app.listen(port, "0.0.0.0", () => {
-  console.log(`✅ Server running on http://0.0.0.0:${port}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
 });
 
 console.log("Google Cloud Credentials:", process.env.GOOGLE_APPLICATION_CREDENTIALS);
