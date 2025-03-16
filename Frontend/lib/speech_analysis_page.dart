@@ -24,6 +24,7 @@ class _SpeechAnalysisPageState extends State<SpeechAnalysisPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _testBackendConnection();
     _fetchSpeechSessions();
     _fetchProgressData();
   }
@@ -32,6 +33,18 @@ class _SpeechAnalysisPageState extends State<SpeechAnalysisPage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _testBackendConnection() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://172.20.10.7:5000'),
+      );
+      print(
+          'Backend connection test: ${response.statusCode} - ${response.body}');
+    } catch (e) {
+      print('Backend connection test error: $e');
+    }
   }
 
   Future<void> _fetchSpeechSessions() async {
@@ -52,7 +65,7 @@ class _SpeechAnalysisPageState extends State<SpeechAnalysisPage>
 
       final token = await user.getIdToken();
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/speech/sessions'),
+        Uri.parse('http://172.20.10.7:5000/api/speech/sessions'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -86,7 +99,7 @@ class _SpeechAnalysisPageState extends State<SpeechAnalysisPage>
 
       final token = await user.getIdToken();
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/speech/progress'),
+        Uri.parse('http://172.20.10.7:5000/api/speech/progress'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

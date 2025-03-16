@@ -3,6 +3,10 @@ import 'services/speech_session_service.dart';
 import 'package:intl/intl.dart';
 import 'notifications_page.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
@@ -11,7 +15,8 @@ class ProgressPage extends StatefulWidget {
   State<ProgressPage> createState() => _ProgressPageState();
 }
 
-class _ProgressPageState extends State<ProgressPage> {
+class _ProgressPageState extends State<ProgressPage>
+    with SingleTickerProviderStateMixin {
   final SpeechSessionService _sessionService = SpeechSessionService();
   bool _isLoading = true;
   Map<String, dynamic> _userStats = {};
@@ -20,10 +25,30 @@ class _ProgressPageState extends State<ProgressPage> {
   bool _disposed = false;
   String? _error;
 
+  // Speech analysis data
+  List<dynamic> _speechSessions = [];
+  List<dynamic> _progressData = [];
+  String _speechAnalysisError = '';
+  bool _speechAnalysisLoading = true;
+
+  // Tab controller
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _initializeData();
+    _fetchSpeechSessions();
+    _fetchProgressData();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _sessionsSubscription?.cancel();
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeData() async {
@@ -49,13 +74,6 @@ class _ProgressPageState extends State<ProgressPage> {
         },
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _disposed = true;
-    _sessionsSubscription?.cancel();
-    super.dispose();
   }
 
   Future<void> _loadUserStats() async {
@@ -85,780 +103,987 @@ class _ProgressPageState extends State<ProgressPage> {
     }
   }
 
-  Future<void> _refreshData() async {
-    if (_disposed) return;
-    setState(() => _error = null);
-    await _loadUserStats();
+  // Speech analysis methods
+  Future<void> _fetchSpeechSessions() async {
+    setState(() {
+      _speechAnalysisLoading = true;
+      _speechAnalysisError = '';
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() {
+          _speechAnalysisLoading = false;
+          _speechAnalysisError = 'User not logged in';
+        });
+        return;
+      }
+
+      final token = await user.getIdToken();
+      final response = await http.get(
+        Uri.parse('http://172.20.10.7:5000/api/speech/sessions'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _speechSessions = data['sessions'];
+          _speechAnalysisLoading = false;
+        });
+      } else {
+        setState(() {
+          _speechAnalysisLoading = false;
+          _speechAnalysisError =
+              'Failed to load sessions: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _speechAnalysisLoading = false;
+        _speechAnalysisError = 'Error: $e';
+      });
+    }
+  }
+
+  Future<void> _fetchProgressData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final token = await user.getIdToken();
+      final response = await http.get(
+        Uri.parse('http://172.20.10.7:5000/api/speech/progress'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _progressData = data['progress'];
+        });
+      }
+    } catch (e) {
+      print('Error fetching progress data: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F0F0),
-      body: _buildBody(),
+      appBar: AppBar(
+        title: const Text('Progress & Analysis'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsPage(),
+                ),
+              );
+            },
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Practice Sessions'),
+            Tab(text: 'Speech Analysis'),
+            Tab(text: 'Progress Charts'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildPracticeSessionsTab(),
+          _buildSpeechAnalysisTab(),
+          _buildProgressChartsTab(),
+        ],
+      ),
     );
   }
 
-  Widget _buildBody() {
-    return Stack(
-      children: [
-        _buildBackground(),
-        SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              if (_error != null) _buildErrorMessage(),
-              Expanded(
-                child: _buildContent(),
+  Widget _buildPracticeSessionsTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+          child: Text(_error!, style: const TextStyle(color: Colors.red)));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStatsCards(),
+          const SizedBox(height: 24),
+          _buildRecentSessions(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpeechAnalysisTab() {
+    if (_speechAnalysisLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_speechAnalysisError.isNotEmpty) {
+      return Center(
+          child:
+              Text(_speechAnalysisError, style: TextStyle(color: Colors.red)));
+    }
+
+    if (_speechSessions.isEmpty) {
+      return const Center(child: Text('No speech sessions found'));
+    }
+
+    return ListView.builder(
+      itemCount: _speechSessions.length,
+      itemBuilder: (context, index) {
+        final session = _speechSessions[index];
+        final timestamp = session['timestamp'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(
+                session['timestamp']['_seconds'] * 1000)
+            : DateTime.now();
+        final formattedDate =
+            DateFormat('MMM d, yyyy - h:mm a').format(timestamp);
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: InkWell(
+            onTap: () => _navigateToSessionDetails(session),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        formattedDate,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                      _buildScoreChip(session['analysis']['overallScore']),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _truncateText(session['transcript'], 100),
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildMetricColumn(
+                          'Confidence', session['analysis']['confidenceScore']),
+                      _buildMetricColumn(
+                          'Grammar', session['analysis']['grammarScore']),
+                      _buildMetricColumn(
+                          'Clarity', session['analysis']['clarityScore']),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProgressChartsTab() {
+    if (_progressData.isEmpty) {
+      return const Center(child: Text('No progress data available'));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your Speaking Progress',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildProgressChart(),
+          const SizedBox(height: 32),
+          _buildRecentMetrics(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreChip(int score) {
+    Color color;
+    if (score >= 80) {
+      color = Colors.green;
+    } else if (score >= 60) {
+      color = Colors.orange;
+    } else {
+      color = Colors.red;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        '$score',
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricColumn(String label, int value) {
+    Color color;
+    if (value >= 80) {
+      color = Colors.green;
+    } else if (value >= 60) {
+      color = Colors.orange;
+    } else {
+      color = Colors.red;
+    }
+
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$value',
+          style: TextStyle(
+            color: color,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildBackground() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 200,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF48CAE4),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(30),
-            bottomRight: Radius.circular(30),
-          ),
-        ),
+  void _navigateToSessionDetails(dynamic session) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SpeechSessionDetailsPage(session: session),
       ),
     );
   }
 
-  Widget _buildAppBar() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const Text(
-            'Progress Tracking',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const NotificationsPage()),
-            ),
-          ),
-        ],
-      ),
-    );
+  String _truncateText(String text, int maxLength) {
+    if (text.length <= maxLength) return text;
+    return '${text.substring(0, maxLength)}...';
   }
 
-  Widget _buildErrorMessage() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.red.shade100,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _error ?? '',
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.red),
-            onPressed: _refreshData,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    if (_isLoading) {
+  Widget _buildProgressChart() {
+    if (_progressData.length < 2) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('Not enough data to show progress chart'),
+        ),
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _refreshData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 100),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              WeeklyProgressSection(sessions: _recentSessions),
-              const SizedBox(height: 20),
-              PerformanceMetricsSection(
-                metrics: _calculateAverageMetrics(_recentSessions),
-                onRefresh: _loadUserStats,
-              ),
-              const SizedBox(height: 20),
-              RecentActivitySection(
-                sessions: _recentSessions,
-                onSessionTap: _showSessionDetails,
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Map<String, double> _calculateAverageMetrics(List<SpeechSession> sessions) {
-    if (sessions.isEmpty) return {};
-
-    final avgMetrics = <String, double>{};
-    for (var session in sessions) {
-      session.metrics.forEach((key, value) {
-        avgMetrics[key] = (avgMetrics[key] ?? 0) + value;
-      });
-    }
-    avgMetrics.forEach((key, value) {
-      avgMetrics[key] = value / sessions.length;
-    });
-    return avgMetrics;
-  }
-
-  void _showSessionDetails(SpeechSession session) {
-    if (!mounted) return;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => SessionDetailsSheet(session: session),
-    );
-  }
-}
-
-class WeeklyProgressSection extends StatelessWidget {
-  final List<SpeechSession> sessions;
-
-  const WeeklyProgressSection({super.key, required this.sessions});
-
-  List<bool> _getWeeklyProgress() {
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    return List.generate(7, (index) {
-      final date = startOfWeek.add(Duration(days: index));
-      return sessions.any((session) =>
-          session.timestamp.year == date.year &&
-          session.timestamp.month == date.month &&
-          session.timestamp.day == date.day);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final weekProgress = _getWeeklyProgress();
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      height: 300,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'This Week',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                DateFormat('MMM d').format(startOfWeek),
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 80,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(7, (index) {
-                return DayProgressCircle(
-                  day: dayNames[index],
-                  completed: weekProgress[index],
-                  isSelected: now.weekday == index + 1,
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class DayProgressCircle extends StatelessWidget {
-  final String day;
-  final bool completed;
-  final bool isSelected;
-
-  const DayProgressCircle({
-    super.key,
-    required this.day,
-    required this.completed,
-    required this.isSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isSelected
-                  ? Colors.black
-                  : completed
-                      ? Colors.grey.shade200
-                      : Colors.grey.shade100,
-            ),
-            child: Center(
-              child: completed
-                  ? Icon(
-                      Icons.check,
-                      color: isSelected ? Colors.white : Colors.green,
-                      size: 20,
-                    )
-                  : null,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            day,
-            style: TextStyle(
-              color: isSelected ? Colors.black : Colors.grey,
-              fontSize: 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class PerformanceMetricsSection extends StatelessWidget {
-  final Map<String, double> metrics;
-  final VoidCallback onRefresh;
-
-  const PerformanceMetricsSection({
-    super.key,
-    required this.metrics,
-    required this.onRefresh,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Performance Metrics',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              TextButton(
-                onPressed: onRefresh,
-                child: const Text('Refresh'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: metrics.entries
-                  .map((entry) => MetricCard(
-                        title: entry.key,
-                        percentage: entry.value.round(),
-                      ))
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class MetricCard extends StatelessWidget {
-  final String title;
-  final int percentage;
-
-  const MetricCard({
-    super.key,
-    required this.title,
-    required this.percentage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      height: 150,
-      margin: const EdgeInsets.only(right: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF48CAE4),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 0,
-            child: Icon(
-              Icons.flag,
-              color: Colors.white.withOpacity(0.5),
-            ),
-          ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      title.capitalize(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$percentage%',
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    value.toInt().toString(),
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      fontSize: 12,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 4,
-                    width: constraints.maxWidth,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: percentage / 100,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(2),
+                  );
+                },
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                getTitlesWidget: (value, meta) {
+                  if (value.toInt() >= 0 &&
+                      value.toInt() < _progressData.length) {
+                    final timestamp = DateTime.fromMillisecondsSinceEpoch(
+                        _progressData[value.toInt()]['timestamp']['_seconds'] *
+                            1000);
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        DateFormat('MM/dd').format(timestamp),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              );
-            },
+                    );
+                  }
+                  return const Text('');
+                },
+              ),
+            ),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-        ],
+          borderData: FlBorderData(show: false),
+          minX: 0,
+          maxX: _progressData.length.toDouble() - 1,
+          minY: 0,
+          maxY: 100,
+          lineBarsData: [
+            _buildLineChartBarData('overallScore', Colors.blue),
+            _buildLineChartBarData('confidenceScore', Colors.green),
+            _buildLineChartBarData('grammarScore', Colors.orange),
+            _buildLineChartBarData('clarityScore', Colors.purple),
+          ],
+        ),
       ),
     );
   }
-}
 
-class RecentActivitySection extends StatelessWidget {
-  final List<SpeechSession> sessions;
-  final Function(SpeechSession) onSessionTap;
+  LineChartBarData _buildLineChartBarData(String metric, Color color) {
+    final spots = <FlSpot>[];
 
-  const RecentActivitySection({
-    super.key,
-    required this.sessions,
-    required this.onSessionTap,
-  });
-
-  String _getTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
-    } else {
-      return 'Just now';
+    for (int i = 0; i < _progressData.length; i++) {
+      spots.add(FlSpot(i.toDouble(), _progressData[i][metric].toDouble()));
     }
+
+    return LineChartBarData(
+      spots: spots,
+      isCurved: true,
+      color: color,
+      barWidth: 3,
+      isStrokeCapRound: true,
+      dotData: FlDotData(show: true),
+      belowBarData: BarAreaData(
+        show: true,
+        color: color.withOpacity(0.1),
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final recentSessions = sessions.take(5).toList();
+  Widget _buildRecentMetrics() {
+    if (_progressData.isEmpty) return const SizedBox.shrink();
 
+    final latestSession = _progressData.last;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Latest Performance',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricCard(
+                'Overall Score',
+                latestSession['overallScore'],
+                Icons.star,
+                Colors.amber,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildMetricCard(
+                'Speech Rate',
+                latestSession['speechRate'],
+                Icons.speed,
+                Colors.blue,
+                suffix: 'WPM',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricCard(
+                'Confidence',
+                latestSession['confidenceScore'],
+                Icons.psychology,
+                Colors.green,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildMetricCard(
+                'Grammar',
+                latestSession['grammarScore'],
+                Icons.spellcheck,
+                Colors.orange,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildMetricCard(
+          'Clarity',
+          latestSession['clarityScore'],
+          Icons.record_voice_over,
+          Colors.purple,
+          fullWidth: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricCard(
+      String title, dynamic value, IconData icon, Color color,
+      {String suffix = '', bool fullWidth = false}) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      width: fullWidth ? double.infinity : null,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Recent Activity',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              if (sessions.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    // Add view all functionality here
-                  },
-                  child: const Text('View All'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (recentSessions.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('No recent activity'),
-              ),
-            )
-          else
-            ...recentSessions.map((session) {
-              return ActivityItem(
-                icon: Icons.record_voice_over,
-                title: 'Completed "${session.topic}" Session',
-                subtitle: _getTimeAgo(session.timestamp),
-                onTap: () => onSessionTap(session),
-              );
-            }),
-        ],
-      ),
-    );
-  }
-}
-
-class ActivityItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const ActivityItem({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF48CAE4).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: const Color(0xFF48CAE4)),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class SessionDetailsSheet extends StatelessWidget {
-  final SpeechSession session;
-
-  const SessionDetailsSheet({
-    super.key,
-    required this.session,
-  });
-
-  String _formatDuration(int seconds) {
-    final minutes = seconds ~/ 60;
-    final remainingSeconds = seconds % 60;
-    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      maxChildSize: 0.9,
-      minChildSize: 0.5,
-      builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SingleChildScrollView(
-          controller: scrollController,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      session.topic,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Session Date: ${DateFormat('MMM d, y').format(session.timestamp)}',
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                Text(
-                  'Duration: ${_formatDuration(session.duration)}',
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Speech Content',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  session.speechText,
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Performance Metrics',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildMetricsGrid(session.metrics),
-                const SizedBox(height: 24),
-                const Text(
-                  'Feedback',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...session.feedback.map((feedback) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            color: Color(0xFF48CAE4),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              feedback,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricsGrid(Map<String, double> metrics) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: metrics.length,
-      itemBuilder: (context, index) {
-        final metric = metrics.entries.elementAt(index);
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 8),
               Text(
-                '${metric.value.round()}%',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF48CAE4),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                metric.key.capitalize(),
+                title,
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color: Colors.grey[600],
                   fontSize: 14,
                 ),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 8),
+          Text(
+            value is int
+                ? '$value$suffix'
+                : '${value.toStringAsFixed(1)}$suffix',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsCards() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your Statistics',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem(
+                  'Total Sessions',
+                  _userStats['totalSessions']?.toString() ?? '0',
+                  Icons.event_note,
+                ),
+                _buildStatItem(
+                  'Total Duration',
+                  '${_userStats['totalDuration']?.toString() ?? '0'} min',
+                  Icons.timer,
+                ),
+                _buildStatItem(
+                  'Avg Score',
+                  '${(_userStats['averageScore'] ?? 0).toStringAsFixed(1)}%',
+                  Icons.star,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: const Color(0xFF48CAE4), size: 28),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentSessions() {
+    if (_recentSessions.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('No recent sessions found'),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Recent Sessions',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _recentSessions.length > 5 ? 5 : _recentSessions.length,
+          itemBuilder: (context, index) {
+            final session = _recentSessions[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(12),
+                title: Text(
+                  session.topic,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  DateFormat('MMM d, yyyy - h:mm a').format(session.timestamp),
+                ),
+                trailing: Text(
+                  '${_getAverageScore(session.metrics).toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                onTap: () => _showSessionDetails(session),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  double _getAverageScore(Map<String, double> metrics) {
+    if (metrics.isEmpty) return 0;
+    final sum = metrics.values.reduce((a, b) => a + b);
+    return sum / metrics.length;
+  }
+
+  void _showSessionDetails(SpeechSession session) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        session.topic,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Session Date: ${DateFormat('MMM d, y').format(session.timestamp)}',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  Text(
+                    'Duration: ${session.duration} seconds',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Speech Content',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    session.speechText,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
+class SpeechSessionDetailsPage extends StatelessWidget {
+  final dynamic session;
+
+  const SpeechSessionDetailsPage({Key? key, required this.session})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final timestamp = session['timestamp'] != null
+        ? DateTime.fromMillisecondsSinceEpoch(
+            session['timestamp']['_seconds'] * 1000)
+        : DateTime.now();
+    final formattedDate = DateFormat('MMMM d, yyyy - h:mm a').format(timestamp);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Speech Details'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              formattedDate,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildScoreSection(),
+            const SizedBox(height: 24),
+            _buildTranscriptSection(),
+            const SizedBox(height: 24),
+            _buildFeedbackSection(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScoreSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Performance Scores',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildScoreRow('Overall Score', session['analysis']['overallScore']),
+          const SizedBox(height: 12),
+          _buildScoreRow('Confidence', session['analysis']['confidenceScore']),
+          const SizedBox(height: 12),
+          _buildScoreRow('Grammar', session['analysis']['grammarScore']),
+          const SizedBox(height: 12),
+          _buildScoreRow('Clarity', session['analysis']['clarityScore']),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _buildMetricItem(
+                  'Speech Rate', '${session['analysis']['speechRate']} WPM'),
+              const SizedBox(width: 16),
+              _buildMetricItem(
+                  'Filler Words', '${session['analysis']['fillerWordCount']}'),
+              const SizedBox(width: 16),
+              _buildMetricItem(
+                  'Pauses', '${session['analysis']['pauseCount']}'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreRow(String label, int score) {
+    Color color;
+    if (score >= 80) {
+      color = Colors.green;
+    } else if (score >= 60) {
+      color = Colors.orange;
+    } else {
+      color = Colors.red;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 16),
+            ),
+            Text(
+              '$score',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: score / 100,
+          backgroundColor: Colors.grey[200],
+          valueColor: AlwaysStoppedAnimation<Color>(color),
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricItem(String label, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTranscriptSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Transcript',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            session['transcript'],
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackSection() {
+    final feedback = session['analysis']['feedback'] as List<dynamic>;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Feedback',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...feedback.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• ', style: TextStyle(fontSize: 16)),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
   }
 }

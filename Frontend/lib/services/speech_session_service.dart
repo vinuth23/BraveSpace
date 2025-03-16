@@ -54,7 +54,7 @@ class SpeechSession {
 
 class SpeechSessionService {
   final String baseUrl =
-      'http://172.20.10.7:3000'; // Physical device IP address
+      'http://172.20.10.7:5000'; // Physical device IP address
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<String?> _getAuthToken() async {
