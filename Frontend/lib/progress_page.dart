@@ -30,6 +30,7 @@ class _ProgressPageState extends State<ProgressPage>
   List<dynamic> _progressData = [];
   String _speechAnalysisError = '';
   bool _speechAnalysisLoading = true;
+  bool _usingMockProgressData = false;
 
   // Tab controller
   late TabController _tabController;
@@ -129,12 +130,30 @@ class _ProgressPageState extends State<ProgressPage>
         },
       );
 
+      final data = json.decode(response.body);
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
         setState(() {
-          _speechSessions = data['sessions'];
+          _speechSessions = data['sessions'] ?? [];
           _speechAnalysisLoading = false;
+
+          // Check if we're using mock data
+          if (data['mockData'] == true) {
+            _speechAnalysisError =
+                'Using sample data - database connection unavailable';
+          }
         });
+      } else if (response.statusCode == 409 &&
+          data['error'] == 'Missing Firestore index') {
+        // Handle missing index error
+        setState(() {
+          _speechSessions = data['sessions'] ?? [];
+          _speechAnalysisLoading = false;
+          _speechAnalysisError = 'Database index missing. Using sample data.';
+        });
+
+        // Log the index URL for admin
+        print('Firestore index URL: ${data['indexUrl']}');
       } else {
         setState(() {
           _speechAnalysisLoading = false;
@@ -164,14 +183,25 @@ class _ProgressPageState extends State<ProgressPage>
         },
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _progressData = data['progress'];
-        });
-      }
+      final data = json.decode(response.body);
+
+      setState(() {
+        _progressData = data['progress'] ?? [];
+
+        // Check if we're using mock data
+        if (data['mockData'] == true) {
+          _usingMockProgressData = true;
+          // We don't need to show an error for this, just log it
+          print('Using mock progress data: ${data['error']}');
+        } else {
+          _usingMockProgressData = false;
+        }
+      });
     } catch (e) {
       print('Error fetching progress data: $e');
+      setState(() {
+        _usingMockProgressData = true;
+      });
     }
   }
 
@@ -241,72 +271,92 @@ class _ProgressPageState extends State<ProgressPage>
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_speechAnalysisError.isNotEmpty) {
-      return Center(
-          child:
-              Text(_speechAnalysisError, style: TextStyle(color: Colors.red)));
-    }
-
     if (_speechSessions.isEmpty) {
       return const Center(child: Text('No speech sessions found'));
     }
 
-    return ListView.builder(
-      itemCount: _speechSessions.length,
-      itemBuilder: (context, index) {
-        final session = _speechSessions[index];
-        final timestamp = session['timestamp'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(
-                session['timestamp']['_seconds'] * 1000)
-            : DateTime.now();
-        final formattedDate =
-            DateFormat('MMM d, yyyy - h:mm a').format(timestamp);
-
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: InkWell(
-            onTap: () => _navigateToSessionDetails(session),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        formattedDate,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                      ),
-                      _buildScoreChip(session['analysis']['overallScore']),
-                    ],
+    return Column(
+      children: [
+        // Show warning banner if using mock data
+        if (_speechAnalysisError.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            color: Colors.amber.shade100,
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Colors.amber),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _speechAnalysisError,
+                    style: TextStyle(color: Colors.amber.shade900),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _truncateText(session['transcript'], 100),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildMetricColumn(
-                          'Confidence', session['analysis']['confidenceScore']),
-                      _buildMetricColumn(
-                          'Grammar', session['analysis']['grammarScore']),
-                      _buildMetricColumn(
-                          'Clarity', session['analysis']['clarityScore']),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        Expanded(
+          child: ListView.builder(
+            itemCount: _speechSessions.length,
+            itemBuilder: (context, index) {
+              final session = _speechSessions[index];
+              final timestamp = session['timestamp'] != null
+                  ? DateTime.fromMillisecondsSinceEpoch(
+                      session['timestamp']['_seconds'] * 1000)
+                  : DateTime.now();
+              final formattedDate =
+                  DateFormat('MMM d, yyyy - h:mm a').format(timestamp);
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: InkWell(
+                  onTap: () => _navigateToSessionDetails(session),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              formattedDate,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                            _buildScoreChip(
+                                session['analysis']['overallScore']),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _truncateText(session['transcript'], 100),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildMetricColumn('Confidence',
+                                session['analysis']['confidenceScore']),
+                            _buildMetricColumn(
+                                'Grammar', session['analysis']['grammarScore']),
+                            _buildMetricColumn(
+                                'Clarity', session['analysis']['clarityScore']),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -315,24 +365,49 @@ class _ProgressPageState extends State<ProgressPage>
       return const Center(child: Text('No progress data available'));
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Your Speaking Progress',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+    return Column(
+      children: [
+        // Show warning banner if using mock data
+        if (_usingMockProgressData)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            color: Colors.amber.shade100,
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Colors.amber),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Using sample progress data - database connection unavailable',
+                    style: TextStyle(color: Colors.amber.shade900),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          _buildProgressChart(),
-          const SizedBox(height: 32),
-          _buildRecentMetrics(),
-        ],
-      ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Your Speaking Progress',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildProgressChart(),
+                const SizedBox(height: 32),
+                _buildRecentMetrics(),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
