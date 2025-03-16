@@ -67,3 +67,80 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       icon: Icons.emoji_events,
       isUnlocked: true,
     ),
+
+     // Locked achievements
+    Achievement(
+      title: 'Playground Pro',
+      description: 'Complete playground interaction scenario',
+      points: 150,
+      icon: Icons.lock,
+      isUnlocked: false,
+    ),
+    Achievement(
+      title: 'Lunch Buddy',
+      description: 'Navigate a school canteen social interaction',
+      points: 175,
+      icon: Icons.lock,
+      isUnlocked: false,
+    ),
+    Achievement(
+      title: 'Lunch Buddy',
+      description: 'Navigate a school canteen social interaction',
+      points: 175,
+      icon: Icons.lock,
+      isUnlocked: false,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    // Filter achievements by unlocked status
+    final unlockedAchievements = achievements.where((a) => a.isUnlocked).toList();
+    final lockedAchievements = achievements.where((a) => !a.isUnlocked).toList();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          // Status bar area
+          Container(
+            padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '10:48',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.signal_cellular_alt, size: 16),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.wifi, size: 16),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        '31',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+
+
