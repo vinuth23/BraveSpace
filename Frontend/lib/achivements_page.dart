@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AchivementsPage extends StatelessWidget {
-  const AchivementsPage({Key? key}) : super(key: key);
+  const AchivementsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class Achievement {
 }
 
 class AchievementsScreen extends StatefulWidget {
-  const AchievementsScreen({Key? key}) : super(key: key);
+  const AchievementsScreen({super.key});
 
   @override
   State<AchievementsScreen> createState() => _AchievementsScreenState();
@@ -105,41 +105,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           // Status bar area
           Container(
             padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '10:48',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Row(
-                  children: [
-                    const Icon(Icons.signal_cellular_alt, size: 16),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.wifi, size: 16),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        '31',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
 
            // App header with back button and title
@@ -211,7 +176,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   // Unlocked achievement cards
                   ...unlockedAchievements.map((achievement) => 
                     _buildAchievementCard(achievement)
-                  ).toList(),
+                  ),
                   
                   const SizedBox(height: 24),
                   
@@ -228,7 +193,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   // Locked achievement cards
                   ...lockedAchievements.map((achievement) => 
                     _buildAchievementCard(achievement)
-                  ).toList(),
+                  ),
                   
                   const SizedBox(height: 24),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/main.dart';
 
 class AvatarCustomizationPage extends StatelessWidget {
   const AvatarCustomizationPage({super.key});
@@ -97,41 +98,6 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
           Container(
             color: const Color(0xFF5ECCE9),
             padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '10:48',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Row(
-                  children: [
-                    const Icon(Icons.signal_cellular_alt, size: 16),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.wifi, size: 16),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        '31',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
 
           // App header with menu and back button
@@ -371,6 +337,24 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                   ],
                   
                   const SizedBox(height: 24),
+
+                  // Add the TextButton here
+                  TextButton(
+                    onPressed: () {
+                      final mainNavigator =
+                          context.findAncestorStateOfType<MainNavigatorState>();
+                      if (mainNavigator != null) {
+                        mainNavigator.onItemTapped(2);
+                      }
+                    },
+                    child: const Row(
+                      children: [
+                        Text('See all'),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_ios, size: 14),
+                      ],
+                    ),
+                  ),
 
                   // Action buttons
                   Row(
