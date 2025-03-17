@@ -32,6 +32,7 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
   @override
   void initState() {
     super.initState();
+    // Simple direct approach - fetch data immediately
     _fetchChildren();
   }
 
@@ -418,20 +419,31 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
   }
 
   List<Map<String, dynamic>> _processProgressData() {
-    return _childProgressData.map((session) {
-      final analysis = session['analysis'];
-      return {
-        'timestamp': session['timestamp'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(
-                session['timestamp']['_seconds'] * 1000)
-            : DateTime.now(),
-        'overallScore': analysis['overallScore'],
-        'confidenceScore': analysis['confidenceScore'],
-        'grammarScore': analysis['grammarScore'],
-        'clarityScore': analysis['clarityScore'],
-      };
-    }).toList()
-      ..sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+    if (_childProgressData.isEmpty) {
+      return [];
+    }
+
+    try {
+      return _childProgressData.map<Map<String, dynamic>>((session) {
+        // Check if analysis exists, if not use empty map
+        final analysis = session['analysis'] ?? {};
+
+        return {
+          'timestamp': session['timestamp'] != null
+              ? DateTime.fromMillisecondsSinceEpoch(
+                  session['timestamp']['_seconds'] * 1000)
+              : DateTime.now(),
+          'overallScore': analysis['overallScore'] ?? 0,
+          'confidenceScore': analysis['confidenceScore'] ?? 0,
+          'grammarScore': analysis['grammarScore'] ?? 0,
+          'clarityScore': analysis['clarityScore'] ?? 0,
+        };
+      }).toList()
+        ..sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+    } catch (e) {
+      print('Error processing progress data: $e');
+      return [];
+    }
   }
 
   Widget _buildLegendItem(String label, Color color) {
@@ -489,7 +501,8 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
   }
 
   Widget _buildSessionCard(Map<String, dynamic> session) {
-    final analysis = session['analysis'];
+    // Check if necessary data exists
+    final analysis = session['analysis'] ?? {};
     final timestamp = session['timestamp'] != null
         ? DateTime.fromMillisecondsSinceEpoch(
             session['timestamp']['_seconds'] * 1000)
@@ -513,7 +526,7 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
                   DateFormat('MMM d, yyyy - h:mm a').format(timestamp),
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
-                _buildScoreChip(analysis['overallScore']),
+                _buildScoreChip(analysis['overallScore'] ?? 0),
               ],
             ),
             const SizedBox(height: 12),
@@ -526,9 +539,10 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildMetricColumn('Confidence', analysis['confidenceScore']),
-                _buildMetricColumn('Grammar', analysis['grammarScore']),
-                _buildMetricColumn('Clarity', analysis['clarityScore']),
+                _buildMetricColumn(
+                    'Confidence', analysis['confidenceScore'] ?? 0),
+                _buildMetricColumn('Grammar', analysis['grammarScore'] ?? 0),
+                _buildMetricColumn('Clarity', analysis['clarityScore'] ?? 0),
               ],
             ),
           ],
@@ -597,7 +611,7 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.cloud_off, size: 80, color: Colors.white),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             'Connection Error',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -606,61 +620,86 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
                 ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
-            _errorMessage,
+            'Unable to connect to the server. Please check your network connection.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white,
                 ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 30),
-          _buildServerUrlInput(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildServerUrlInput() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Update Server URL',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _serverUrlController,
-            decoration: InputDecoration(
-              labelText: 'Server URL',
-              hintText: 'e.g., http://192.168.1.5:5000',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+          if (_errorMessage.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _errorMessage,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white,
+                    ),
+                textAlign: TextAlign.center,
               ),
-              prefixIcon: const Icon(Icons.link),
             ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _currentApiUrl = _serverUrlController.text.trim();
-              });
-              _fetchChildren();
-            },
-            icon: const Icon(Icons.refresh),
-            label: const Text('Try This Server'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF48CAE4),
-              foregroundColor: Colors.white,
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'Current Server: $_currentApiUrl',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _fetchChildren,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reconnect'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF48CAE4),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _useMockData,
+                        icon: const Icon(Icons.desktop_windows),
+                        label: const Text('Demo Mode'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[400],
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -707,17 +746,14 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
       print('Fetching children from: $_currentApiUrl/api/therapist/children');
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        print('No user logged in');
         setState(() {
           _isLoading = false;
-          _errorMessage = 'User not logged in. Please sign in again.';
+          _errorMessage = 'Please sign in to continue.';
         });
         return;
       }
 
-      print('Getting Firebase ID token...');
       final token = await user.getIdToken();
-      print('Token received, making API request...');
 
       final response = await http.get(
         Uri.parse('$_currentApiUrl/api/therapist/children'),
@@ -726,22 +762,17 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
           'Content-Type': 'application/json',
         },
       ).timeout(
-        const Duration(seconds: 30),
+        const Duration(seconds: 15),
         onTimeout: () {
-          print('Request timed out after 30 seconds');
           throw Exception(
-              'Network timeout - Server is not responding. Check that your server is running and the URL is correct.');
+              'Connection timed out. Please check your network or server URL.');
         },
       );
 
-      print('Response received with status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('Successfully parsed response data');
         setState(() {
-          _children = data['children'];
+          _children = data['children'] ?? [];
           _isLoading = false;
 
           if (_children.isNotEmpty && _selectedChildId == null) {
@@ -751,20 +782,15 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
           }
         });
       } else {
-        print('Error response from server: ${response.statusCode}');
-        print('Error body: ${response.body}');
         setState(() {
           _isLoading = false;
-          _errorMessage =
-              'Server returned error ${response.statusCode}\n${response.body}';
+          _errorMessage = 'Server error: ${response.statusCode}';
         });
       }
     } catch (e) {
-      print('Exception caught: $e');
       setState(() {
         _isLoading = false;
-        _errorMessage =
-            'Connection error: ${e.toString()}\n\nTry updating the server URL below.';
+        _errorMessage = e.toString();
       });
     }
   }
@@ -776,6 +802,7 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
     });
 
     try {
+      print('Fetching progress for child ID: $childId');
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         setState(() {
@@ -792,31 +819,37 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw Exception(
-              'Network timeout - Please check your internet connection');
-        },
-      );
+      ).timeout(const Duration(seconds: 15));
+
+      print('Child progress response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('Response data: $data');
+
+        // Handle data from the child-progress endpoint
+        List<dynamic> progressData = [];
+
+        if (data['progress'] != null) {
+          print('Found ${data['progress'].length} progress items');
+          progressData = data['progress'];
+        }
+
         setState(() {
-          _childProgressData = data['progress'];
+          _childProgressData = progressData;
           _isLoading = false;
         });
       } else {
         setState(() {
           _isLoading = false;
-          _errorMessage =
-              'Failed to load child progress: ${response.statusCode}';
+          _errorMessage = 'Failed to load session data: ${response.statusCode}';
         });
       }
     } catch (e) {
+      print('Error: $e');
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Error loading progress: ${e.toString()}';
+        _errorMessage = 'Error loading progress data: $e';
       });
     }
   }
@@ -867,5 +900,91 @@ class _TherapistDashboardPageState extends State<TherapistDashboardPage> {
         SnackBar(content: Text('Error: $e')),
       );
     }
+  }
+
+  // Helper method to generate mock data for demonstration purposes
+  void _useMockData() {
+    print('Using mock data for demonstration');
+    final now = DateTime.now();
+
+    // Mock children data
+    setState(() {
+      _children = [
+        {
+          'uid': 'mock-child-1',
+          'firstName': 'Vinuth',
+          'lastName': 'S',
+          'email': 'vinuth@example.com'
+        },
+        {
+          'uid': 'mock-child-2',
+          'firstName': 'John',
+          'lastName': 'Doe',
+          'email': 'john@example.com'
+        }
+      ];
+
+      // Set selected child
+      _selectedChildId = 'mock-child-1';
+      _selectedChildInfo = _children[0];
+
+      // Generate mock progress data
+      _childProgressData = [
+        {
+          'id': 'mock-session-1',
+          'transcript':
+              'This is a mock transcript for demonstration. The backend server is currently unavailable.',
+          'analysis': {
+            'overallScore': 75,
+            'confidenceScore': 80,
+            'grammarScore': 70,
+            'clarityScore': 85
+          },
+          'timestamp': {
+            '_seconds':
+                now.subtract(const Duration(days: 1)).millisecondsSinceEpoch ~/
+                    1000,
+            '_nanoseconds': 0
+          }
+        },
+        {
+          'id': 'mock-session-2',
+          'transcript':
+              'This is another mock transcript with different scores. In a real application, this would contain the actual speech content.',
+          'analysis': {
+            'overallScore': 82,
+            'confidenceScore': 85,
+            'grammarScore': 78,
+            'clarityScore': 88
+          },
+          'timestamp': {
+            '_seconds':
+                now.subtract(const Duration(days: 2)).millisecondsSinceEpoch ~/
+                    1000,
+            '_nanoseconds': 0
+          }
+        },
+        {
+          'id': 'mock-session-3',
+          'transcript':
+              'Third mock transcript showing progress over time. This demonstrates how the charts would look with real data.',
+          'analysis': {
+            'overallScore': 90,
+            'confidenceScore': 92,
+            'grammarScore': 88,
+            'clarityScore': 91
+          },
+          'timestamp': {
+            '_seconds':
+                now.subtract(const Duration(days: 3)).millisecondsSinceEpoch ~/
+                    1000,
+            '_nanoseconds': 0
+          }
+        }
+      ];
+
+      _isLoading = false;
+      _errorMessage = '';
+    });
   }
 }
