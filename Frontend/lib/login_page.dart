@@ -45,8 +45,8 @@ class _LoginPageState extends State<LoginPage> {
         try {
           final response = await http.post(
             Uri.parse(
-                'http://172.20.10.7:3000/verifyToken'), //use this for galaxy a71
-            //Uri.parse('http://10.0.2.2:3000/verifyToken'), //use this for android studio
+                'http://172.20.10.7:5000/verifyToken'), //use this for galaxy a71
+            //Uri.parse('http://10.0.2.2:5000/verifyToken'), //use this for android studio
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
