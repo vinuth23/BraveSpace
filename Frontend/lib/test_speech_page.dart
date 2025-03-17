@@ -178,15 +178,28 @@ class _TestSpeechPageState extends State<TestSpeechPage> {
         timestamp: DateTime.now(),
         topic: _topicController.text,
         speechText: _speechController.text,
-        metrics: Map<String, double>.from(analysis['metrics']),
-        duration: analysis['duration'] as int,
-        feedback: List<String>.from(analysis['feedback']),
+        metrics: {
+          'overallScore': analysis['metrics']['language'] * 0.4 +
+              analysis['metrics']['confidence'] * 0.2 +
+              analysis['metrics']['fluency'] * 0.2 +
+              analysis['metrics']['pronunciation'] * 0.1 +
+              analysis['metrics']['structure'] * 0.1,
+          'confidenceScore': analysis['metrics']['confidence'],
+          'lengthScore': analysis['metrics']['language'],
+          'structureScore': analysis['metrics']['structure'],
+        },
+        duration: analysis['duration'],
+        feedback: analysis['feedback'],
       );
 
       await _sessionService.saveSession(session);
 
       setState(() {
-        _analysisResults = analysis;
+        _analysisResults = {
+          'duration': session.duration,
+          'metrics': session.metrics,
+          'feedback': session.feedback,
+        };
         _isAnalyzing = false;
       });
 

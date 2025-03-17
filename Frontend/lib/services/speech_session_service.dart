@@ -42,7 +42,10 @@ class SpeechSession {
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
-      'timestamp': Timestamp.fromDate(timestamp),
+      'timestamp': {
+        '_seconds': timestamp.millisecondsSinceEpoch ~/ 1000,
+        '_nanoseconds': 0
+      },
       'topic': topic,
       'speechText': speechText,
       'metrics': metrics,
