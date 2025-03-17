@@ -83,7 +83,6 @@ class MainNavigatorState extends State<MainNavigator> {
     const VRSessionsPage(),
     const ProgressPage(),
     const ProfilePage(),
-    const SpeechAnalysisPage(),
   ];
 
   @override
@@ -116,16 +115,6 @@ class MainNavigatorState extends State<MainNavigator> {
             _buildNavItem(Icons.person_outline, 4),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _currentIndex = 5; // Navigate to Speech Analysis page
-          });
-        },
-        backgroundColor: const Color(0xFF48CAE4),
-        child: const Icon(Icons.mic, color: Colors.white),
-        tooltip: 'Speech Analysis',
       ),
     );
   }

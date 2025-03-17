@@ -21,7 +21,7 @@ public class SpeechRecorder : MonoBehaviour
     [SerializeField] private Image recordingIndicator;
     
     [Header("Backend Settings")]
-    [SerializeField] private string backendUrl = "http://localhost:3000/api/speech/upload";
+    [SerializeField] private string backendUrl = "http://172.20.10.7:5000/api/speech/upload";
     [SerializeField] private string authToken = ""; // Set this at runtime after user logs in
     
     private AudioClip recordingClip;
