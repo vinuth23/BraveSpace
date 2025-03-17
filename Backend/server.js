@@ -871,68 +871,14 @@ async function analyzeSpeech(audioFilePath) {
       };
     }
     
-    // For now, we'll use a simple scoring mechanism
-    // In a real implementation, this would use more sophisticated NLP
-    const wordCount = transcript.split(/\s+/).length;
-    const sentenceCount = transcript.split(/[.!?]+/).filter(Boolean).length;
-    
-    // Calculate average words per sentence (a simple fluency metric)
-    const avgWordsPerSentence = sentenceCount > 0 ? wordCount / sentenceCount : 0;
-    
-    // Calculate a simple score based on length and structure
-    // This is just a placeholder for actual analysis
-    let overallScore = 0;
-    let feedback = '';
-    let confidenceScore = 0;
-    
-    if (wordCount > 50) {
-      overallScore = 80;
-      confidenceScore = 75;
-      feedback = 'Good length speech with clear articulation.';
-    } else if (wordCount > 20) {
-      overallScore = 60;
-      confidenceScore = 60;
-      feedback = 'Moderate length speech, could be more detailed.';
-    } else {
-      overallScore = 40;
-      confidenceScore = 50;
-      feedback = 'Speech too short for comprehensive analysis.';
-    }
-    
-    // Adjust score based on sentence structure
-    if (avgWordsPerSentence > 25) {
-      overallScore -= 10;
-      feedback += ' Sentences are too long, consider breaking them up.';
-    } else if (avgWordsPerSentence < 5 && sentenceCount > 3) {
-      overallScore -= 5;
-      feedback += ' Sentences are very short, consider more complex structures.';
-    }
-    
-    // Create detailed analysis
-    const detailedAnalysis = [
-      {
-        category: 'Length',
-        score: wordCount > 50 ? 90 : (wordCount > 20 ? 70 : 40),
-        feedback: `Speech contains ${wordCount} words.`
-      },
-      {
-        category: 'Structure',
-        score: avgWordsPerSentence > 5 && avgWordsPerSentence < 20 ? 85 : 60,
-        feedback: `Average of ${avgWordsPerSentence.toFixed(1)} words per sentence.`
-      }
-    ];
+    // Perform detailed analysis
+    const analysisResult = performDetailedAnalysis(transcript);
     
     // Return the analysis results
     return {
       status: 200,
       message: 'Speech analysis completed successfully',
-      data: {
-        transcript,
-        overallScore,
-        confidenceScore,
-        feedback,
-        detailedAnalysis
-      }
+      data: analysisResult
     };
   } catch (error) {
     console.error('Error in analyzeSpeech:', error);
@@ -942,6 +888,220 @@ async function analyzeSpeech(audioFilePath) {
       data: null
     };
   }
+}
+
+// Detailed speech analysis function
+function performDetailedAnalysis(transcript) {
+  // Basic statistics
+  const words = transcript.split(/\s+/);
+  const wordCount = words.length;
+  const sentences = transcript.split(/[.!?]+/).filter(Boolean);
+  const sentenceCount = sentences.length;
+  const avgWordsPerSentence = sentenceCount > 0 ? wordCount / sentenceCount : 0;
+  
+  // Expanded filler word analysis with more variations
+  const fillerWords = [
+    'um', 'uh', 'uhm', 'er', 'ah', 'like', 'actually', 'basically', 'literally', 
+    'sort of', 'kind of', 'you know', 'i mean', 'so', 'well', 'right', 'anyway',
+    'honestly', 'frankly', 'obviously', 'simply', 'just', 'totally', 'essentially'
+  ];
+  const fillerWordCounts = {};
+  let totalFillerWords = 0;
+  
+  // Convert transcript to lowercase for case-insensitive matching
+  const lowerTranscript = transcript.toLowerCase();
+  
+  // Count filler words with enhanced detection for word boundaries
+  fillerWords.forEach(filler => {
+    // For multi-word fillers
+    if (filler.includes(' ')) {
+      const regex = new RegExp(`\\b${filler.replace(/ /g, '\\s+')}\\b`, 'gi');
+      const matches = lowerTranscript.match(regex);
+      const count = matches ? matches.length : 0;
+      
+      if (count > 0) {
+        fillerWordCounts[filler] = count;
+        totalFillerWords += count;
+      }
+    } else {
+      // For single-word fillers, more lenient matching
+      const regex = new RegExp(`\\b${filler}\\b`, 'gi');
+      const matches = lowerTranscript.match(regex);
+      const count = matches ? matches.length : 0;
+      
+      if (count > 0) {
+        fillerWordCounts[filler] = count;
+        totalFillerWords += count;
+      }
+    }
+  });
+
+  // Also check for partial repetitions at beginning of sentences
+  sentences.forEach(sentence => {
+    const trimmedSentence = sentence.trim().toLowerCase();
+    if (trimmedSentence.startsWith('so ') || 
+        trimmedSentence.startsWith('and ') || 
+        trimmedSentence.startsWith('but ') ||
+        trimmedSentence.startsWith('like ')) {
+      
+      const firstWord = trimmedSentence.split(' ')[0];
+      fillerWordCounts[firstWord] = (fillerWordCounts[firstWord] || 0) + 1;
+      totalFillerWords += 1;
+    }
+  });
+  
+  // Calculate filler word percentage
+  const fillerWordPercentage = (totalFillerWords / wordCount) * 100;
+  
+  // Repeated words/phrases analysis (excluding common words)
+  const commonWords = ['i', 'you', 'the', 'a', 'an', 'and', 'but', 'or', 'in', 'on', 'at', 'to', 'for', 'with', 'is', 'are', 'was', 'were'];
+  const wordFrequency = {};
+  
+  // Count word frequencies
+  words.forEach(word => {
+    const cleanWord = word.toLowerCase().replace(/[.,!?;:'"()\-]/g, '');
+    if (cleanWord && !commonWords.includes(cleanWord)) {
+      wordFrequency[cleanWord] = (wordFrequency[cleanWord] || 0) + 1;
+    }
+  });
+  
+  // Find repeated words (occurring more than twice)
+  const repeatedWords = Object.entries(wordFrequency)
+    .filter(([word, count]) => count > 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  
+  // Sentiment analysis using natural tokenizer and analyzer
+  const tokenizer = new natural.WordTokenizer();
+  const analyzer = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn');
+  const tokenizedText = tokenizer.tokenize(transcript);
+  const sentimentScore = analyzer.getSentiment(tokenizedText);
+  
+  // Calculate pauses (approximated by punctuation)
+  const pauseIndicators = transcript.match(/[.,!?;:\-]/g);
+  const pauseCount = pauseIndicators ? pauseIndicators.length : 0;
+  const pausesPerSentence = sentenceCount > 0 ? pauseCount / sentenceCount : 0;
+  
+  // Calculate confidence score
+  // Lower score if: many filler words, excessive repetition, or too many/too few pauses
+  let confidenceScore = 75; // Start with a base score
+  
+  // Adjust based on filler words
+  if (fillerWordPercentage > 10) {
+    confidenceScore -= 15;
+  } else if (fillerWordPercentage > 5) {
+    confidenceScore -= 7;
+  }
+  
+  // Adjust based on repeated words
+  if (repeatedWords.length > 3) {
+    confidenceScore -= 10;
+  } else if (repeatedWords.length > 1) {
+    confidenceScore -= 5;
+  }
+  
+  // Adjust based on sentence structure
+  if (avgWordsPerSentence > 25) {
+    confidenceScore -= 10;
+  } else if (avgWordsPerSentence < 5 && sentenceCount > 3) {
+    confidenceScore -= 5;
+  }
+  
+  // Calculate overall score
+  let overallScore = 0;
+  
+  if (wordCount > 100) {
+    overallScore = 85;
+  } else if (wordCount > 50) {
+    overallScore = 75;
+  } else if (wordCount > 20) {
+    overallScore = 60;
+  } else {
+    overallScore = 40;
+  }
+  
+  // Adjust overall score based on filler words and repetition
+  overallScore -= (fillerWordPercentage / 2);
+  overallScore -= Math.min(repeatedWords.length * 3, 15);
+  
+  // Ensure scores are in valid range
+  confidenceScore = Math.max(0, Math.min(100, Math.round(confidenceScore)));
+  overallScore = Math.max(0, Math.min(100, Math.round(overallScore)));
+  
+  // Generate personalized feedback
+  let feedback = '';
+  
+  if (wordCount < 20) {
+    feedback = 'Your speech was quite short. Try to elaborate more on your points.';
+  } else {
+    feedback = 'You made some good points in your speech.';
+  }
+  
+  if (fillerWordPercentage > 10) {
+    feedback += ' You used quite a few filler words, which can make you sound less confident.';
+  } else if (fillerWordPercentage > 5) {
+    feedback += ' Try to reduce some of the filler words for a more polished delivery.';
+  }
+  
+  if (repeatedWords.length > 2) {
+    feedback += ' You repeated some words frequently, which can make your message less engaging.';
+  }
+  
+  if (confidenceScore < 50) {
+    feedback += ' Practice can help improve your confidence and delivery.';
+  } else if (confidenceScore > 75) {
+    feedback += ' You sound quite confident in your delivery.';
+  }
+  
+  // Create detailed analysis categories
+  const detailedAnalysis = [
+    {
+      category: 'Length',
+      score: wordCount > 100 ? 90 : (wordCount > 50 ? 75 : (wordCount > 20 ? 60 : 40)),
+      feedback: `Speech contains ${wordCount} words.`
+    },
+    {
+      category: 'Structure',
+      score: avgWordsPerSentence > 5 && avgWordsPerSentence < 20 ? 85 : 60,
+      feedback: `Average of ${avgWordsPerSentence.toFixed(1)} words per sentence.`
+    },
+    {
+      category: 'Filler Words',
+      score: 100 - Math.min(fillerWordPercentage * 5, 100),
+      feedback: totalFillerWords > 0 ? 
+        `Used ${totalFillerWords} filler words (${fillerWordPercentage.toFixed(1)}% of speech).` : 
+        'No filler words detected - excellent!'
+    },
+    {
+      category: 'Repetition',
+      score: 100 - (repeatedWords.length * 10),
+      feedback: repeatedWords.length > 0 ? 
+        `Repeated ${repeatedWords.length} words/phrases frequently.` : 
+        'Good variety of words without excessive repetition.'
+    },
+    {
+      category: 'Tone',
+      score: Math.round((sentimentScore + 1) * 50), // Convert -1 to 1 scale to 0-100
+      feedback: sentimentScore > 0.3 ? 'Positive tone throughout.' : 
+               (sentimentScore < -0.3 ? 'Negative tone detected.' : 'Neutral tone throughout.')
+    }
+  ];
+  
+  return {
+    transcript,
+    overallScore,
+    confidenceScore,
+    feedback,
+    detailedAnalysis,
+    fillerWords: Object.entries(fillerWordCounts).map(([word, count]) => ({ word, count })),
+    repeatedWords: repeatedWords.map(([word, count]) => ({ word, count })),
+    speechStats: {
+      wordCount,
+      sentenceCount,
+      avgWordsPerSentence,
+      fillerWordPercentage
+    }
+  };
 }
 
 // Retrieve VR videos (User fetches from frontend)
