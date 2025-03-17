@@ -3,6 +3,7 @@ import 'activity_history_page.dart';
 import 'goals_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'therapist_dashboard.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,7 +15,10 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String _userName = '';
+  String _firstName = '';
+  String _lastName = '';
+  String _email = '';
+  String _userRole = 'child';
   bool _isLoading = true;
 
   @override
@@ -24,21 +28,35 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      final user = _auth.currentUser;
+      final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final userData =
-            await _firestore.collection('users').doc(user.uid).get();
-        if (userData.exists) {
+        // Fetch user data from Firestore
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data();
           setState(() {
-            _userName = '${userData['firstName']} ${userData['lastName']}';
-            _isLoading = false;
+            _firstName = userData?['firstName'] ?? '';
+            _lastName = userData?['lastName'] ?? '';
+            _email = userData?['email'] ?? '';
+            _userRole = userData?['role'] ?? 'child';
           });
         }
       }
     } catch (e) {
       print('Error loading user data: $e');
-      setState(() => _isLoading = false);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -120,33 +138,74 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Profile Header
-                    Center(
+                    // User information card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 10,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
                       child: Column(
                         children: [
                           CircleAvatar(
-                            radius: 40,
-                            backgroundColor: Colors.white,
-                            child: const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: Colors.black54,
+                            radius: 50,
+                            backgroundColor: Colors.cyan.shade200,
+                            child: Text(
+                              _firstName.isNotEmpty && _lastName.isNotEmpty
+                                  ? '${_firstName[0]}${_lastName[0]}'
+                                  : 'U',
+                              style: const TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          _isLoading
-                              ? const CircularProgressIndicator()
-                              : Text(
-                                  _userName,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                          const Text(
-                            'Sri Lanka',
+                          const SizedBox(height: 16),
+                          Text(
+                            '$_firstName $_lastName',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _email,
                             style: TextStyle(
-                              color: Colors.black,
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Display user role
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getRoleColor().withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _getRoleColor(),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              _userRole.toUpperCase(),
+                              style: TextStyle(
+                                color: _getRoleColor(),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -283,6 +342,21 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                     ),
+                    // Show Therapist Dashboard option only for therapists and parents
+                    if (_userRole == 'therapist' || _userRole == 'parent')
+                      _buildMenuItem(
+                        icon: Icons.dashboard_outlined,
+                        title: 'Therapist Dashboard',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const TherapistDashboardPage(),
+                            ),
+                          );
+                        },
+                      ),
                     const SizedBox(height: 24),
 
                     // Logout Button
@@ -337,5 +411,19 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: onTap,
       ),
     );
+  }
+
+  // Helper method to get role color
+  Color _getRoleColor() {
+    switch (_userRole) {
+      case 'therapist':
+        return Colors.purple;
+      case 'parent':
+        return Colors.green;
+      case 'child':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }
