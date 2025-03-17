@@ -220,36 +220,99 @@ class _ProgressPageState extends State<ProgressPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Progress & Analysis'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationsPage(),
-                ),
-              );
-            },
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Practice Sessions'),
-            Tab(text: 'Speech Analysis'),
-            Tab(text: 'Progress Charts'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
+      backgroundColor: const Color(0xFFF0F0F0),
+      body: Stack(
         children: [
-          _buildPracticeSessionsTab(),
-          _buildSpeechAnalysisTab(),
-          _buildProgressChartsTab(),
+          // Curved background
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 200,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF48CAE4),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: Column(
+              children: [
+                // App Bar
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Progress & Analysis',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined,
+                            color: Colors.black),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                // Tab Bar
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    labelColor: const Color(0xFF48CAE4),
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: const Color(0xFF48CAE4),
+                    tabs: const [
+                      Tab(text: 'Practice Sessions'),
+                      Tab(text: 'Speech Analysis'),
+                      Tab(text: 'Progress Charts'),
+                    ],
+                  ),
+                ),
+                // Tab Content
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildPracticeSessionsTab(),
+                      _buildSpeechAnalysisTab(),
+                      _buildProgressChartsTab(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -293,8 +356,12 @@ class _ProgressPageState extends State<ProgressPage>
         if (_speechAnalysisError.isNotEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            color: Colors.amber.shade100,
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade100,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Row(
               children: [
                 const Icon(Icons.info_outline, color: Colors.amber),
@@ -327,6 +394,7 @@ class _ProgressPageState extends State<ProgressPage>
           ),
         Expanded(
           child: ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: _speechSessions.length,
             itemBuilder: (context, index) {
               final session = _speechSessions[index];
@@ -337,12 +405,25 @@ class _ProgressPageState extends State<ProgressPage>
               final formattedDate =
                   DateFormat('MMM d, yyyy - h:mm a').format(timestamp);
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
                 child: InkWell(
                   onTap: () => _navigateToSessionDetails(session),
+                  borderRadius: BorderRadius.circular(20),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -360,12 +441,15 @@ class _ProgressPageState extends State<ProgressPage>
                                 session['analysis']['overallScore']),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
                           _truncateText(session['transcript'], 100),
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.5,
+                          ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -400,8 +484,12 @@ class _ProgressPageState extends State<ProgressPage>
         if (_usingMockProgressData)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            color: Colors.amber.shade100,
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade100,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Row(
               children: [
                 const Icon(Icons.info_outline, color: Colors.amber),
@@ -429,7 +517,22 @@ class _ProgressPageState extends State<ProgressPage>
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildProgressChart(),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: _buildProgressChart(),
+                ),
                 const SizedBox(height: 32),
                 _buildRecentMetrics(),
               ],
@@ -454,7 +557,7 @@ class _ProgressPageState extends State<ProgressPage>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color),
       ),
       child: Text(
@@ -699,10 +802,10 @@ class _ProgressPageState extends State<ProgressPage>
       {String suffix = '', bool fullWidth = false}) {
     return Container(
       width: fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -717,7 +820,7 @@ class _ProgressPageState extends State<ProgressPage>
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 20),
+              Icon(icon, color: const Color(0xFF48CAE4), size: 20),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -744,44 +847,53 @@ class _ProgressPageState extends State<ProgressPage>
   }
 
   Widget _buildStatsCards() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Your Statistics',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your Statistics',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(
+                'Total Sessions',
+                _userStats['totalSessions']?.toString() ?? '0',
+                Icons.event_note,
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  'Total Sessions',
-                  _userStats['totalSessions']?.toString() ?? '0',
-                  Icons.event_note,
-                ),
-                _buildStatItem(
-                  'Total Duration',
-                  '${_userStats['totalDuration']?.toString() ?? '0'} min',
-                  Icons.timer,
-                ),
-                _buildStatItem(
-                  'Avg Score',
-                  '${(_userStats['averageScore'] ?? 0).toStringAsFixed(1)}%',
-                  Icons.star,
-                ),
-              ],
-            ),
-          ],
-        ),
+              _buildStatItem(
+                'Total Duration',
+                '${_userStats['totalDuration']?.toString() ?? '0'} min',
+                Icons.timer,
+              ),
+              _buildStatItem(
+                'Avg Score',
+                '${(_userStats['averageScore'] ?? 0).toStringAsFixed(1)}%',
+                Icons.star,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -820,50 +932,80 @@ class _ProgressPageState extends State<ProgressPage>
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Recent Sessions',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recent Sessions',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _recentSessions.length > 5 ? 5 : _recentSessions.length,
-          itemBuilder: (context, index) {
-            final session = _recentSessions[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(12),
-                title: Text(
-                  session.topic,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+          const SizedBox(height: 16),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _recentSessions.length > 5 ? 5 : _recentSessions.length,
+            itemBuilder: (context, index) {
+              final session = _recentSessions[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                subtitle: Text(
-                  DateFormat('MMM d, yyyy - h:mm a').format(session.timestamp),
-                ),
-                trailing: Text(
-                  '${_getAverageScore(session.metrics).toStringAsFixed(0)}%',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(20),
+                  title: Text(
+                    session.topic,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                  subtitle: Text(
+                    DateFormat('MMM d, yyyy - h:mm a')
+                        .format(session.timestamp),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF48CAE4).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_getAverageScore(session.metrics).toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        color: Color(0xFF48CAE4),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  onTap: () => _showSessionDetails(session),
                 ),
-                onTap: () => _showSessionDetails(session),
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
