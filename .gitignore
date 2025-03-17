@@ -1,0 +1,40 @@
+# Ignore Unity auto-generated files in VR folder
+VR/Library/
+VR/Temp/
+VR/Logs/
+VR/Obj/
+VR/Build/
+VR/Builds/
+VR/UserSettings/
+
+# Ignore Node.js dependencies in Backend folder
+Backend/node_modules/
+Backend/npm-debug.log*
+Backend/yarn-debug.log*
+Backend/yarn-error.log*
+Backend/pnpm-debug.log*
+Backend/package-lock.json
+Backend/yarn.lock
+Backend/.pnpm-debug.log
+
+# Ignore Flutter build files in Frontend folder
+Frontend/build/
+Frontend/.android/
+Frontend/.ios/
+Frontend/.flutter-plugins
+Frontend/.flutter-plugins-dependencies
+Frontend/.flutter-versions
+Frontend/.melos/
+Frontend/dart_tool/
+Frontend/pubspec.lock
+
+# Ignore IDE/editor specific files
+.vscode/
+.idea/
+*.iml
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db

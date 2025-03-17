@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'test_speech_page.dart';
+import 'speech_analysis_page.dart';
 
 export 'main.dart' show MainNavigatorState;
 
@@ -82,6 +83,7 @@ class MainNavigatorState extends State<MainNavigator> {
     const VRSessionsPage(),
     const ProgressPage(),
     const ProfilePage(),
+    const SpeechAnalysisPage(),
   ];
 
   @override
@@ -114,6 +116,16 @@ class MainNavigatorState extends State<MainNavigator> {
             _buildNavItem(Icons.person_outline, 4),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _currentIndex = 5; // Navigate to Speech Analysis page
+          });
+        },
+        backgroundColor: const Color(0xFF48CAE4),
+        child: const Icon(Icons.mic, color: Colors.white),
+        tooltip: 'Speech Analysis',
       ),
     );
   }
