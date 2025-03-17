@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_page.dart';
+import 'main.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -64,49 +65,71 @@ class _SignupPageState extends State<SignupPage> {
       print(
           '✅ Firebase Auth account created with ID: ${userCredential.user?.uid}');
 
-      // Then send signup data to backend with the Firebase Auth UID
-      print('🚀 Sending signup data to backend...');
-      try {
-        final response = await http.post(
-          Uri.parse('http://10.0.2.2:3000/signup'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: json.encode({
-            'uid': userCredential.user?.uid, // Send the Firebase Auth UID
-            'email': _emailController.text.trim(),
-            'password': _passwordController.text.trim(),
-            'firstName': _firstNameController.text.trim(),
-            'lastName': _lastNameController.text.trim(),
-          }),
-        );
-
-        print('📥 Backend response status: ${response.statusCode}');
-        print('📥 Backend response body: ${response.body}');
-
-        if (response.statusCode != 201) {
-          throw Exception(
-              'Backend returned ${response.statusCode}: ${response.body}');
-        }
-      } catch (e) {
-        print('❌ Backend communication error: $e');
-        throw Exception('Failed to communicate with backend: $e');
-      }
-
-      // Update the user's display name
+      // Update the user's display name first
       await userCredential.user?.updateDisplayName(
           '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}');
 
-      // Registration successful, return to login page
-      if (mounted) {
-        Navigator.pop(context);
+      // Create user document in Firestore
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user?.uid)
+            .set({
+          'uid': userCredential.user?.uid,
+          'email': _emailController.text.trim(),
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'displayName':
+              '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastLogin': FieldValue.serverTimestamp(),
+          'challenges': [],
+          'sessions': [],
+        });
+        print('✅ User document created in Firestore');
 
-        // Force a reload of the HomePage data
-        final homeState = context.findAncestorStateOfType<HomePageState>();
-        if (homeState != null) {
-          await homeState.loadUserData();
+        // Send signup data to backend
+        print('🚀 Sending signup data to backend...');
+        try {
+          final response = await http.post(
+            Uri.parse('http://172.20.10.7:5000/signup'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: json.encode({
+              'uid': userCredential.user?.uid,
+              'email': _emailController.text.trim(),
+              'firstName': _firstNameController.text.trim(),
+              'lastName': _lastNameController.text.trim(),
+            }),
+          );
+
+          print('📥 Backend response status: ${response.statusCode}');
+          print('📥 Backend response body: ${response.body}');
+
+          if (response.statusCode != 201 && response.statusCode != 200) {
+            final errorData = json.decode(response.body);
+            throw Exception(errorData['error'] ?? 'Failed to create account');
+          }
+
+          // Registration successful, navigate to home page
+          if (mounted) {
+            // Clear any existing navigation stack and go to home
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainNavigator()),
+              (route) => false,
+            );
+          }
+        } catch (e) {
+          print('❌ Backend communication error: $e');
+          // Don't delete the user if backend fails, just log the error
+          print('⚠️ Backend signup failed but user was created in Firebase');
         }
+      } catch (e) {
+        print('❌ Error creating Firestore user document: $e');
+        await userCredential.user?.delete();
+        throw Exception('Failed to create user profile: $e');
       }
     } catch (e) {
       print('❌ Error during signup: $e');
@@ -116,6 +139,8 @@ class _SignupPageState extends State<SignupPage> {
           message = 'The password provided is too weak';
         } else if (e.code == 'email-already-in-use') {
           message = 'An account already exists for this email';
+        } else if (e.code == 'invalid-email') {
+          message = 'The email address is invalid';
         }
       }
       if (mounted) {
