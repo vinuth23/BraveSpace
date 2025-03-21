@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'notifications_page.dart';
+import 'unity_vr_player.dart'; // Import our new Unity player
 
 class VRSessionDetailsPage extends StatefulWidget {
   const VRSessionDetailsPage({super.key});
@@ -13,10 +14,11 @@ class VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
       "https://your-cloud-storage-link.com/video.mp4"; // Replace with backend URL
 
   void _playVideo(BuildContext context) {
+    // Navigate to Unity VR player instead of video player
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
+        builder: (context) => const UnityVRPlayerScreen(),
       ),
     );
   }

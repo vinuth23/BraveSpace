@@ -1,0 +1,44 @@
+[
+  {
+    "level_": 0,
+    "message_": "Start JSON generation. Platform version: 23 min SDK version: armeabi-v7a",
+    "file_": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\cpp\\CMakeLists.txt",
+    "tag_": "debug|armeabi-v7a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 894990545
+  },
+  {
+    "level_": 0,
+    "message_": "JSON \u0027C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx\\Debug\\5sb186a6\\armeabi-v7a\\android_gradle_build.json\u0027 was up-to-date",
+    "file_": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\cpp\\CMakeLists.txt",
+    "tag_": "debug|armeabi-v7a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 1901625258
+  },
+  {
+    "level_": 0,
+    "message_": "JSON generation completed without problems",
+    "file_": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\cpp\\CMakeLists.txt",
+    "tag_": "debug|armeabi-v7a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {},
+      "fieldsDescending": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 704004444
+  }
+]

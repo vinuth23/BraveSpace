@@ -1,0 +1,154 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.unity3d.player.unityLibrary-merged_res-5:/values/values.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\vinut\\.gradle\\caches\\8.9\\transforms\\092ced2274286481f028ca15cf9a49d3\\transformed\\jetified-TextToSpeechConverter\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,97,140,183,226,269,312,355,402,449,496,541,586,628,678",
+                        "endColumns": "41,42,42,42,42,42,42,46,46,46,44,44,41,49,69",
+                        "endOffsets": "92,135,178,221,264,307,350,397,444,491,536,581,623,673,743"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,21,22",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,97,140,183,226,269,312,355,402,449,496,541,586,929,979",
+                        "endColumns": "41,42,42,42,42,42,42,46,46,46,44,44,41,49,69",
+                        "endOffsets": "92,135,178,221,264,307,350,397,444,491,536,581,623,974,1044"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values\\freeformwindow.xml",
+                    "from": {
+                        "startLines": "5,6,2,4,3",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "221,286,55,167,112",
+                        "endColumns": "64,63,56,53,54",
+                        "endOffsets": "281,345,107,216,162"
+                    },
+                    "to": {
+                        "startLines": "16,17,18,19,20",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "674,731,787,836,882",
+                        "endColumns": "56,55,48,45,46",
+                        "endOffsets": "726,782,831,877,924"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values\\ids.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "46",
+                        "endOffsets": "97"
+                    },
+                    "to": {
+                        "startLines": "15",
+                        "startColumns": "4",
+                        "startOffsets": "628",
+                        "endColumns": "45",
+                        "endOffsets": "669"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values\\styles.xml",
+                    "from": {
+                        "startLines": "5,2,6",
+                        "startColumns": "2,2,2",
+                        "startOffsets": "199,55,291",
+                        "endLines": "5,4,9",
+                        "endColumns": "90,10,10",
+                        "endOffsets": "287,195,518"
+                    },
+                    "to": {
+                        "startLines": "23,24,27",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "1049,1141,1284",
+                        "endLines": "23,26,30",
+                        "endColumns": "91,10,10",
+                        "endOffsets": "1136,1279,1508"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "com.unity3d.player.unityLibrary-mergeReleaseResources-3:/values/values.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\vinut\\.gradle\\caches\\8.9\\transforms\\092ced2274286481f028ca15cf9a49d3\\transformed\\jetified-TextToSpeechConverter\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,97,140,183,226,269,312,355,402,449,496,541,586,628,678",
+                        "endColumns": "41,42,42,42,42,42,42,46,46,46,44,44,41,49,69",
+                        "endOffsets": "92,135,178,221,264,307,350,397,444,491,536,581,623,673,743"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,21,22",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,97,140,183,226,269,312,355,402,449,496,541,586,929,979",
+                        "endColumns": "41,42,42,42,42,42,42,46,46,46,44,44,41,49,69",
+                        "endOffsets": "92,135,178,221,264,307,350,397,444,491,536,581,623,974,1044"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values\\freeformwindow.xml",
+                    "from": {
+                        "startLines": "5,6,2,4,3",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "221,286,55,167,112",
+                        "endColumns": "64,63,56,53,54",
+                        "endOffsets": "281,345,107,216,162"
+                    },
+                    "to": {
+                        "startLines": "16,17,18,19,20",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "674,731,787,836,882",
+                        "endColumns": "56,55,48,45,46",
+                        "endOffsets": "726,782,831,877,924"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values\\ids.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "46",
+                        "endOffsets": "97"
+                    },
+                    "to": {
+                        "startLines": "15",
+                        "startColumns": "4",
+                        "startOffsets": "628",
+                        "endColumns": "45",
+                        "endOffsets": "669"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values\\styles.xml",
+                    "from": {
+                        "startLines": "5,2,6",
+                        "startColumns": "2,2,2",
+                        "startOffsets": "199,55,291",
+                        "endLines": "5,4,9",
+                        "endColumns": "90,10,10",
+                        "endOffsets": "287,195,518"
+                    },
+                    "to": {
+                        "startLines": "23,24,27",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "1049,1141,1284",
+                        "endLines": "23,26,30",
+                        "endColumns": "91,10,10",
+                        "endOffsets": "1136,1279,1508"
+                    }
+                }
+            ]
+        }
+    ]
+}

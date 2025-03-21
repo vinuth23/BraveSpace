@@ -1,0 +1,9 @@
+com.unity3d.player.unityLibrary-jetified-TextToSpeechConverter-0 C:\Users\vinut\.gradle\caches\8.9\transforms\092ced2274286481f028ca15cf9a49d3\transformed\jetified-TextToSpeechConverter\res
+com.unity3d.player.unityLibrary-pngs-1 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\build\generated\res\pngs\release
+com.unity3d.player.unityLibrary-resValues-2 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\build\generated\res\resValues\release
+com.unity3d.player.unityLibrary-rs-3 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\build\generated\res\rs\release
+com.unity3d.player.unityLibrary-mergeReleaseResources-4 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.unity3d.player.unityLibrary-mergeReleaseResources-5 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.unity3d.player.unityLibrary-merged_res-6 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\build\intermediates\merged_res\release
+com.unity3d.player.unityLibrary-main-7 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\src\main\res
+com.unity3d.player.unityLibrary-release-8 C:\Users\vinut\Desktop\Bravespace\BraveSpace\VR\exported_android\unityLibrary\src\release\res

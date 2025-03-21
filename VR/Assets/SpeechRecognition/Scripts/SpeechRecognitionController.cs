@@ -47,6 +47,13 @@ namespace BrainCheck
             if (outputText != null)
             {
                 TriggerClappingAnimation();
+                
+                // Send to Flutter bridge if available
+                UnityFlutterBridge bridge = FindObjectOfType<UnityFlutterBridge>();
+                if (bridge != null)
+                {
+                    bridge.OnSpeechRecognized(message);
+                }
             }
         }
 

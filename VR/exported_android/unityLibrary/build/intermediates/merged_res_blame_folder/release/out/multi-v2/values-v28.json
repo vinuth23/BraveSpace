@@ -1,0 +1,52 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.unity3d.player.unityLibrary-merged_res-5:/values-v28/values-v28.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values-v28\\styles.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "2",
+                        "startOffsets": "55",
+                        "endLines": "4",
+                        "endColumns": "10",
+                        "endOffsets": "233"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "4",
+                        "endColumns": "10",
+                        "endOffsets": "231"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "com.unity3d.player.unityLibrary-mergeReleaseResources-3:/values-v28/values-v28.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\res\\values-v28\\styles.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "2",
+                        "startOffsets": "55",
+                        "endLines": "4",
+                        "endColumns": "10",
+                        "endOffsets": "233"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "4",
+                        "endColumns": "10",
+                        "endOffsets": "231"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1356,6 +1356,106 @@ app.get("/avatars", async (req, res) => {
   }
 });
 
+// VR Session API endpoints
+app.post('/api/vr-sessions', async (req, res) => {
+  try {
+    // Verify token and extract user ID
+    const user = await verifyTokenAndGetUser(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = user.uid;
+    const { transcript, analysis, duration } = req.body;
+    
+    if (!transcript) {
+      return res.status(400).json({ error: 'Transcript is required' });
+    }
+    
+    // Save VR session data to Firestore
+    const vrSessionRef = db.collection('users').doc(userId).collection('vrSessions').doc();
+    await vrSessionRef.set({
+      transcript,
+      analysis: analysis || {},
+      duration: duration || 0,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log(`VR session saved for user ${userId}`);
+    
+    res.status(201).json({ 
+      success: true, 
+      sessionId: vrSessionRef.id 
+    });
+  } catch (error) {
+    console.error('Error saving VR session:', error);
+    res.status(500).json({ error: 'Failed to save VR session data' });
+  }
+});
+
+app.get('/api/vr-sessions/:userId', async (req, res) => {
+  try {
+    // Verify token and extract user ID
+    const user = await verifyTokenAndGetUser(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Check if user is requesting their own data or they're a therapist
+    const { userId } = req.params;
+    const requestorId = user.uid;
+    
+    if (userId !== requestorId) {
+      // Check if requestor is a therapist for this user
+      const therapistRef = db.collection('therapists').doc(requestorId);
+      const therapistDoc = await therapistRef.get();
+      
+      if (!therapistDoc.exists) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      const therapistData = therapistDoc.data();
+      if (!therapistData.children || !therapistData.children.includes(userId)) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    }
+    
+    // Get VR sessions for the user
+    const vrSessionsRef = db.collection('users').doc(userId).collection('vrSessions');
+    const snapshot = await vrSessionsRef.orderBy('timestamp', 'desc').get();
+    
+    const sessions = [];
+    snapshot.forEach(doc => {
+      sessions.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    res.status(200).json({ sessions });
+  } catch (error) {
+    console.error('Error fetching VR sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch VR sessions' });
+  }
+});
+
+// Helper function to verify token and get user
+async function verifyTokenAndGetUser(req) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null;
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    return decodedToken;
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return null;
+  }
+}
+
 // Start the server
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
@@ -1465,4 +1565,106 @@ function getMockProgressData() {
       speechRate: 120
     }
   ];
+}
+
+// Speech analysis endpoint for VR speech
+app.post('/api/analyze-speech', async (req, res) => {
+  try {
+    // Verify token and extract user ID
+    const user = await verifyTokenAndGetUser(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = user.uid;
+    const { transcript, source } = req.body;
+    
+    if (!transcript) {
+      return res.status(400).json({ error: 'Transcript is required' });
+    }
+    
+    console.log(`Analyzing speech for user ${userId}, source: ${source || 'unknown'}`);
+    
+    // Analyze the speech transcript
+    const analysis = await analyzeSpeech(transcript);
+    
+    // Return the analysis results
+    res.status(200).json(analysis);
+  } catch (error) {
+    console.error('Error analyzing speech:', error);
+    res.status(500).json({ error: 'Failed to analyze speech data' });
+  }
+});
+
+// Function to analyze speech
+async function analyzeSpeech(transcript) {
+  try {
+    // This is a simplified mock analysis
+    // In a production environment, you would use AI services or more sophisticated algorithms
+    
+    // Count total words
+    const words = transcript.split(/\s+/).filter(w => w.length > 0);
+    const totalWords = words.length;
+    
+    // Count filler words (um, uh, like, etc.)
+    const fillerWords = ['um', 'uh', 'like', 'you know', 'actually', 'basically', 'so', 'well'];
+    let fillerCount = 0;
+    
+    for (const word of words) {
+      if (fillerWords.includes(word.toLowerCase())) {
+        fillerCount++;
+      }
+    }
+    
+    // Calculate confidence score (fewer filler words = higher confidence)
+    const fillerPercentage = totalWords > 0 ? (fillerCount / totalWords) * 100 : 0;
+    const confidenceScore = Math.max(0, Math.min(100, 100 - fillerPercentage * 5));
+    
+    // Calculate clarity score (based on sentence length and complexity)
+    const sentences = transcript.split(/[.!?]/).filter(s => s.trim().length > 0);
+    const avgWordsPerSentence = sentences.length > 0 ? totalWords / sentences.length : 0;
+    
+    // Ideal sentence length is between 10-20 words
+    let clarityScore = 80; // Base score
+    if (avgWordsPerSentence > 25) {
+      clarityScore -= (avgWordsPerSentence - 25) * 2; // Penalty for very long sentences
+    } else if (avgWordsPerSentence < 5 && avgWordsPerSentence > 0) {
+      clarityScore -= (5 - avgWordsPerSentence) * 5; // Penalty for very short sentences
+    }
+    
+    // Grammar score - simplified placeholder
+    // In a real app, you would use NLP to check grammar
+    const grammarScore = 75; // Placeholder score
+    
+    // Overall score - weighted average
+    const overallScore = Math.round(
+      (confidenceScore * 0.35) + (clarityScore * 0.35) + (grammarScore * 0.3)
+    );
+    
+    return {
+      overallScore: Math.max(0, Math.min(100, Math.round(overallScore))),
+      confidenceScore: Math.max(0, Math.min(100, Math.round(confidenceScore))),
+      clarityScore: Math.max(0, Math.min(100, Math.round(clarityScore))),
+      grammarScore: Math.max(0, Math.min(100, Math.round(grammarScore))),
+      wordCount: totalWords,
+      fillerWordCount: fillerCount,
+      sentences: sentences.length,
+      avgWordsPerSentence: avgWordsPerSentence.toFixed(1),
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error in speech analysis:', error);
+    // Return default values in case of error
+    return {
+      overallScore: 70,
+      confidenceScore: 70,
+      clarityScore: 70,
+      grammarScore: 70,
+      wordCount: 0,
+      fillerWordCount: 0,
+      sentences: 0,
+      avgWordsPerSentence: 0,
+      timestamp: new Date().toISOString()
+    };
+  }
 }

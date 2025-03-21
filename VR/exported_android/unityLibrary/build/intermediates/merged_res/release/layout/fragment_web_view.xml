@@ -1,0 +1,44 @@
+<?xml version  =  "1.0" encoding  =  "utf-8"?>
+<RelativeLayout xmlns:android  =  "http://schemas.android.com/apk/res/android"
+    xmlns:app  =  "http://schemas.android.com/apk/res-auto"
+    xmlns:tools  =  "http://schemas.android.com/tools"
+    android:layout_width  =  "match_parent"
+    android:layout_height  =  "match_parent"
+    tools:context  =  ".AudioStreamPlugin">
+
+<!--    <mayankgupta.com.textToSpeech.CustomLineVisualizer-->
+<!--        android:id = "@+id/visualizerLine"-->
+<!--        android:layout_width = "match_parent"-->
+<!--        android:layout_height = "240dp"/>-->
+
+    <com.chibde.visualizer.LineVisualizer
+        android:id = "@+id/visualizerLine"
+        android:layout_width = "match_parent"
+        android:layout_height = "240dp"/>
+
+    <com.chibde.visualizer.BarVisualizer
+        android:id = "@+id/visualizerBar"
+        android:layout_width = "match_parent"
+        android:layout_height = "240dp"/>
+
+    <com.chibde.visualizer.CircleBarVisualizer
+        android:id = "@+id/visualizerCircleBar"
+        android:layout_width = "match_parent"
+        android:layout_height = "240dp"/>
+
+    <com.chibde.visualizer.CircleVisualizer
+        android:id = "@+id/visualizerCircle"
+        android:layout_width = "match_parent"
+        android:layout_height = "240dp"/>
+
+    <com.chibde.visualizer.SquareBarVisualizer
+        android:id = "@+id/visualizerSquareBar"
+        android:layout_width = "match_parent"
+        android:layout_height = "240dp"/>
+
+    <com.chibde.visualizer.LineBarVisualizer
+        android:id = "@+id/visualizerLineBar"
+        android:layout_width = "match_parent"
+        android:layout_height = "240dp" />
+
+</RelativeLayout>

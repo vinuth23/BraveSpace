@@ -1,0 +1,173 @@
+{
+  "abi": "ARMEABI_V7A",
+  "info": {
+    "abi": "ARMEABI_V7A",
+    "bitness": 32,
+    "deprecated": false,
+    "default": true
+  },
+  "cxxBuildFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx\\RelWithDebInfo\\3x3w5e2t\\armeabi-v7a",
+  "soFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cxx\\RelWithDebInfo\\3x3w5e2t\\obj\\armeabi-v7a",
+  "soRepublishFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cmake\\release\\obj\\armeabi-v7a",
+  "abiPlatformVersion": 23,
+  "cmake": {
+    "effectiveConfiguration": {
+      "inheritEnvironments": [],
+      "variables": []
+    }
+  },
+  "variant": {
+    "buildSystemArgumentList": [
+      "-DBUILD_GRADLE_DIRECTORY\u003dC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary",
+      "-DANDROID_STL\u003dc++_shared"
+    ],
+    "cFlagsList": [],
+    "cppFlagsList": [],
+    "variantName": "release",
+    "isDebuggableEnabled": false,
+    "validAbiList": [
+      "ARMEABI_V7A"
+    ],
+    "buildTargetSet": [],
+    "implicitBuildTargetSet": [],
+    "cmakeSettingsConfiguration": "android-gradle-plugin-predetermined-name",
+    "module": {
+      "cxxFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx",
+      "intermediatesBaseFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates",
+      "intermediatesFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cxx",
+      "gradleModulePathName": ":unityLibrary",
+      "moduleRootFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary",
+      "moduleBuildFile": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build.gradle",
+      "makeFile": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\cpp\\CMakeLists.txt",
+      "buildSystem": "CMAKE",
+      "ndkFolder": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK",
+      "ndkVersion": "23.1.7779620",
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultStl": "LIBCXX_STATIC",
+      "ndkMetaPlatforms": {
+        "min": 16,
+        "max": 31,
+        "aliases": {
+          "20": 19,
+          "25": 24,
+          "J": 16,
+          "J-MR1": 17,
+          "J-MR2": 18,
+          "K": 19,
+          "L": 21,
+          "L-MR1": 22,
+          "M": 23,
+          "N": 24,
+          "N-MR1": 24,
+          "O": 26,
+          "O-MR1": 27,
+          "P": 28,
+          "Q": 29,
+          "R": 30,
+          "S": 31
+        }
+      },
+      "ndkMetaAbiList": [
+        {
+          "abi": "ARMEABI_V7A",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "ARM64_V8A",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86_64",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        }
+      ],
+      "cmakeToolchainFile": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\build\\cmake\\android.toolchain.cmake",
+      "cmake": {
+        "isValidCmakeAvailable": true,
+        "cmakeExe": "C:\\Users\\vinut\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe",
+        "minimumCmakeVersion": "3.22.1"
+      },
+      "stlSharedObjectMap": {
+        "LIBCXX_SHARED": {
+          "ARMEABI_V7A": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\arm-linux-androideabi\\libc++_shared.so",
+          "ARM64_V8A": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\aarch64-linux-android\\libc++_shared.so",
+          "X86": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\i686-linux-android\\libc++_shared.so",
+          "X86_64": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\x86_64-linux-android\\libc++_shared.so"
+        },
+        "LIBCXX_STATIC": {},
+        "NONE": {},
+        "SYSTEM": {}
+      },
+      "project": {
+        "rootBuildGradleFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android",
+        "sdkFolder": "C:\\Users\\vinut\\AppData\\Local\\Android\\Sdk",
+        "isBuildOnlyTargetAbiEnabled": true,
+        "isCmakeBuildCohabitationEnabled": false,
+        "isPrefabEnabled": true
+      },
+      "outputOptions": [],
+      "ninjaExe": "C:\\Users\\vinut\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe"
+    },
+    "prefabClassPaths": [
+      "C:\\Users\\vinut\\.gradle\\caches\\modules-2\\files-2.1\\com.google.prefab\\cli\\2.0.0\\f2702b5ca13df54e3ca92f29d6b403fb6285d8df\\cli-2.0.0-all.jar"
+    ],
+    "prefabPackages": [
+      "C:\\Users\\vinut\\.gradle\\caches\\8.9\\transforms\\0922550b6600bb0f72f745390be97dda\\transformed\\jetified-games-frame-pacing-1.10.0\\prefab"
+    ],
+    "prefabPackageConfigurations": [],
+    "stlType": "c++_shared",
+    "optimizationTag": "RelWithDebInfo"
+  },
+  "buildSettings": {
+    "environmentVariables": []
+  },
+  "prefabFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx\\RelWithDebInfo\\3x3w5e2t\\prefab\\armeabi-v7a",
+  "isActiveAbi": true,
+  "fullConfigurationHash": "3x3w5e2t5h5402m6y6165621vt6e2c591z245d4s2c13651teh2wc3r2z5",
+  "configurationArguments": [
+    "-HC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\cpp",
+    "-DCMAKE_SYSTEM_NAME\u003dAndroid",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS\u003dON",
+    "-DCMAKE_SYSTEM_VERSION\u003d23",
+    "-DANDROID_PLATFORM\u003dandroid-23",
+    "-DANDROID_ABI\u003darmeabi-v7a",
+    "-DCMAKE_ANDROID_ARCH_ABI\u003darmeabi-v7a",
+    "-DANDROID_NDK\u003dC:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK",
+    "-DCMAKE_ANDROID_NDK\u003dC:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK",
+    "-DCMAKE_TOOLCHAIN_FILE\u003dC:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\build\\cmake\\android.toolchain.cmake",
+    "-DCMAKE_MAKE_PROGRAM\u003dC:\\Users\\vinut\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003dC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cxx\\RelWithDebInfo\\3x3w5e2t\\obj\\armeabi-v7a",
+    "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY\u003dC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cxx\\RelWithDebInfo\\3x3w5e2t\\obj\\armeabi-v7a",
+    "-DCMAKE_BUILD_TYPE\u003dRelWithDebInfo",
+    "-DCMAKE_FIND_ROOT_PATH\u003dC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx\\RelWithDebInfo\\3x3w5e2t\\prefab\\armeabi-v7a\\prefab",
+    "-BC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx\\RelWithDebInfo\\3x3w5e2t\\armeabi-v7a",
+    "-GNinja",
+    "-DBUILD_GRADLE_DIRECTORY\u003dC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary",
+    "-DANDROID_STL\u003dc++_shared"
+  ],
+  "stlLibraryFile": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\arm-linux-androideabi\\libc++_shared.so",
+  "intermediatesParentFolder": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cxx\\RelWithDebInfo\\3x3w5e2t"
+}

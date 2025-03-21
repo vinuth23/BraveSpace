@@ -1,0 +1,21 @@
+@echo off
+"C:\\Users\\vinut\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\cmake.exe" ^
+  "-HC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\src\\main\\cpp" ^
+  "-DCMAKE_SYSTEM_NAME=Android" ^
+  "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON" ^
+  "-DCMAKE_SYSTEM_VERSION=23" ^
+  "-DANDROID_PLATFORM=android-23" ^
+  "-DANDROID_ABI=armeabi-v7a" ^
+  "-DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a" ^
+  "-DANDROID_NDK=C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK" ^
+  "-DCMAKE_ANDROID_NDK=C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK" ^
+  "-DCMAKE_TOOLCHAIN_FILE=C:\\Program Files\\Unity\\Hub\\Editor\\2023.1.8f1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK\\build\\cmake\\android.toolchain.cmake" ^
+  "-DCMAKE_MAKE_PROGRAM=C:\\Users\\vinut\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe" ^
+  "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cxx\\RelWithDebInfo\\3x3w5e2t\\obj\\armeabi-v7a" ^
+  "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\build\\intermediates\\cxx\\RelWithDebInfo\\3x3w5e2t\\obj\\armeabi-v7a" ^
+  "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ^
+  "-DCMAKE_FIND_ROOT_PATH=C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx\\RelWithDebInfo\\3x3w5e2t\\prefab\\armeabi-v7a\\prefab" ^
+  "-BC:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary\\.cxx\\RelWithDebInfo\\3x3w5e2t\\armeabi-v7a" ^
+  -GNinja ^
+  "-DBUILD_GRADLE_DIRECTORY=C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\VR\\exported_android\\unityLibrary" ^
+  "-DANDROID_STL=c++_shared"
