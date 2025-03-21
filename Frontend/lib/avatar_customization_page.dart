@@ -54,10 +54,10 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
   
   // Face expressions
   final List<String> faceExpressions = [
-    '( ͡° ͜ʖ ͡°)', // Normal
-    '(≧▽≦)', // Smiling
-    '(♥ω♥ )', // Love eyes
-    '(¬_¬)', // Side-eye
+    'assets/images/normal.png', // Normal
+    'assets/images/smiling.png', // Smiling
+    'assets/images/love_eyes.png', // Love eyes
+    'assets/images/close_eye.png', // Close-eye
   ];
 
   @override
@@ -201,12 +201,10 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                   ),
                   
                   // Face expression
-                  Text(
+                  Image.asset(
                     faceExpressions[selectedFaceIndex],
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    width: 60,
+                    height: 60,
                   ),
                 ],
               ),
@@ -331,9 +329,10 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(
-                                child: Text(
+                                child: Image.asset(
                                   faceExpressions[index],
-                                  style: const TextStyle(fontSize: 20),
+                                  width: 40,
+                                  height: 40,
                                 ),
                               ),
                             ),
