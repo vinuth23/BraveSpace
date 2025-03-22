@@ -70,8 +70,6 @@ Thumbs.db
 **/Library/
 **/Temp/
 **/obj/
-**/ProjectSettings/
-**/*.meta
 **/Assets/Class4/
 **/Assets/Class4.meta
 **/Assets/Settings/
@@ -84,8 +82,6 @@ Thumbs.db
 **/Assets/Readme.asset
 
 # Force ignore any remaining specific Unity and Flutter files
-**/VR/ProjectSettings/*.asset
-**/VR/ProjectSettings/
 **/VR/Assembly-CSharp*.csproj
 **/VR/README.md
 **/VR/*.sln
