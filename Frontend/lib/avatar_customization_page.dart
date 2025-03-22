@@ -31,10 +31,12 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
   // Avatar properties
   Color selectedSkinTone = const Color(0xFFEAC393); // Default middle skin tone
   int selectedFaceIndex = 0;
+  int selectedHeadIndex = 0;
   
   // Original values for reset functionality
   late Color originalSkinTone;
   late int originalFaceIndex;
+  late int originalHeadIndex;
   
   // List of categories
   final List<Map<String, dynamic>> categories = [
@@ -61,18 +63,28 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     'assets/images/close_eye.png', // Close-eye
   ];
 
+  // Head preview images
+  final List<String> headPreviews = [
+    'assets/images/head1.png',
+    'assets/images/head2.png',
+    'assets/images/head3.png',
+    'assets/images/head4.png',
+  ];
+
   @override
   void initState() {
     super.initState();
     // Initialize original values
     originalSkinTone = selectedSkinTone;
     originalFaceIndex = selectedFaceIndex;
+    originalHeadIndex = selectedHeadIndex;
   }
 
   void resetChanges() {
     setState(() {
       selectedSkinTone = originalSkinTone;
       selectedFaceIndex = originalFaceIndex;
+      selectedHeadIndex = originalHeadIndex;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Changes reset!')),
@@ -83,6 +95,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     // Save current values as original
     originalSkinTone = selectedSkinTone;
     originalFaceIndex = selectedFaceIndex;
+    originalHeadIndex = selectedHeadIndex;
     
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Avatar saved successfully!')),
@@ -171,6 +184,13 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                     faceExpressions[selectedFaceIndex],
                     width: 60,
                     height: 60,
+                  ),
+                  
+                  // Head preview
+                  Image.asset(
+                    headPreviews[selectedHeadIndex],
+                    width: 120,
+                    height: 120,
                   ),
                 ],
               ),
@@ -352,6 +372,39 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                         SizedBox(width: 4),
                         Icon(Icons.arrow_forward_ios, size: 14),
                       ],
+                    ),
+                  ),
+
+                  // Horizontal scrolling for head previews
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: headPreviews.length,
+                      itemBuilder: (context, index) {
+                        bool isSelected = selectedHeadIndex == index;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedHeadIndex = index;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              border: isSelected
+                                  ? Border.all(color: Colors.blue, width: 3)
+                                  : Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Image.asset(
+                              headPreviews[index],
+                              width: 80,
+                              height: 80,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
 
