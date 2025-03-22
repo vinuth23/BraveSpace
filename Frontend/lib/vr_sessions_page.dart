@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'vr_session_details_page.dart';
 import 'notifications_page.dart';
 import 'test_speech_page.dart';
+import 'main.dart' show launchUnity;
 
 class VRSessionsPage extends StatelessWidget {
   const VRSessionsPage({super.key});
@@ -112,6 +113,49 @@ class VRSessionsPage extends StatelessWidget {
                             ),
                           ),
                           child: const Text('Customize VR Activities'),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await launchUnity();
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Failed to launch Unity: $e'),
+                                      const Text(
+                                        'Make sure the Unity app is installed and correctly configured.',
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                  backgroundColor: Colors.red,
+                                  duration: const Duration(seconds: 5),
+                                  action: SnackBarAction(
+                                    label: 'OK',
+                                    textColor: Colors.white,
+                                    onPressed: () {},
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF48CAE4),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          icon: const Icon(Icons.videogame_asset),
+                          label: const Text('Launch Unity VR Experience'),
                         ),
                       ],
                     ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'notifications_page.dart';
+import 'main.dart' show launchUnity;
 
 class VRSessionDetailsPage extends StatefulWidget {
   const VRSessionDetailsPage({super.key});
@@ -12,13 +13,35 @@ class VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
   String videoUrl =
       "https://your-cloud-storage-link.com/video.mp4"; // Replace with backend URL
 
-  void _playVideo(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VideoPlayerScreen(videoUrl: videoUrl),
-      ),
-    );
+  void _playVideo(BuildContext context) async {
+    try {
+      // Launch Unity app
+      await launchUnity();
+    } catch (e) {
+      // Show error message if Unity app couldn't be launched
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Failed to launch Unity: $e'),
+              const Text(
+                'Make sure the Unity app is installed and correctly configured.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
   }
 
   @override
