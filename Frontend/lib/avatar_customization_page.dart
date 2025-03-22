@@ -71,6 +71,15 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     'assets/images/head4.png',
   ];
 
+  // Add a mapping between skin tones and their corresponding avatar images
+  final Map<Color, String> skinToneImages = {
+    const Color(0xFFF8E5C9): 'assets/images/avatar_lightest.png', // Lightest
+    const Color(0xFFFFDCB5): 'assets/images/avatar_light.png',    // Light
+    const Color(0xFFEAC393): 'assets/images/avatar_medium.png',   // Medium
+    const Color(0xFFBF8A63): 'assets/images/avatar_dark.png',     // Dark
+    const Color(0xFF7D5339): 'assets/images/avatar_darkest.png',  // Darkest
+  };
+
   @override
   void initState() {
     super.initState();
@@ -153,44 +162,29 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Avatar face background
-                  Container(
+
+                  // Avatar image based on selected skin tone
+                  Image.asset(
+                    skinToneImages[selectedSkinTone] ?? 'assets/images/avatar_default.png',
                     width: 120,
                     height: 120,
-                    decoration: BoxDecoration(
-                      color: selectedSkinTone,
-                      shape: BoxShape.circle,
-                    ),
                   ),
-                  
-                  // Hair (simplified)
-                  Positioned(
-                    top: 0,
-                    child: Container(
-                      width: 120,
-                      height: 60,
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(60),
-                          topRight: Radius.circular(60),
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  // Face expression
-                  Image.asset(
-                    faceExpressions[selectedFaceIndex],
-                    width: 60,
-                    height: 60,
-                  ),
-                  
+
                   // Head preview
                   Image.asset(
                     headPreviews[selectedHeadIndex],
                     width: 120,
                     height: 120,
+                  ),
+
+                  // Face expression (adjusted position using Positioned)
+                  Positioned(
+                    top: 40, // Adjust this value to move the face expression down
+                    child: Image.asset(
+                      faceExpressions[selectedFaceIndex],
+                      width: 60,
+                      height: 60,
+                    ),
                   ),
                 ],
               ),
@@ -355,7 +349,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                     ),
                   ],
                   
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 1),
 
                   // Add the TextButton here
                   TextButton(
@@ -376,6 +370,16 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                   ),
 
                   // Horizontal scrolling for head previews
+
+                  // Face expressions section
+                  const Text(
+                    'Head',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
                   SizedBox(
                     height: 100,
                     child: ListView.builder(
