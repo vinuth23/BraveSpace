@@ -82,3 +82,28 @@ Thumbs.db
 **/Assets/Scripts/SpeechRecorderUI.cs
 **/Assets/InputSystem_Actions.inputactions
 **/Assets/Readme.asset
+
+# Force ignore any remaining specific Unity and Flutter files
+**/VR/ProjectSettings/*.asset
+**/VR/ProjectSettings/
+**/VR/Assembly-CSharp*.csproj
+**/VR/README.md
+**/VR/*.sln
+**/VR/eg.txt
+**/VR/.gitignore.txt
+
+# Untracked directories to ignore
+**/VR/Assets/Animation/
+**/VR/Assets/Animation.meta
+**/VR/Assets/Classroom/
+**/VR/Assets/Classroom.meta
+**/VR/Assets/FlutterUnityIntegration/
+**/VR/Assets/FlutterUnityIntegration.meta
+**/VR/Assets/Materials/
+**/VR/Assets/Materials.meta
+**/VR/Assets/Plugins/
+**/VR/Assets/SpeechRecognition/
+**/VR/Assets/SpeechRecognition.meta
+
+# Ignore Unity_Build_Instructions.md
+/Unity_Build_Instructions.md
