@@ -1,5 +1,8 @@
 apply plugin: 'com.android.library'
 
+// Define unityStreamingAssets
+def unityStreamingAssets = ''
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation(name: 'TextToSpeechConverter', ext:'aar')
@@ -7,7 +10,6 @@ dependencies {
 }
 
 android {
-    ndkPath "C:/Program Files/Unity/Hub/Editor/2023.1.8f1/Editor/Data/PlaybackEngines/AndroidPlayer/NDK"
     compileSdkVersion 33
     buildToolsVersion "32.0.0"
 
@@ -59,4 +61,4 @@ android.externalNativeBuild {
 }
 android.buildFeatures {
     prefab true
-}
+}
