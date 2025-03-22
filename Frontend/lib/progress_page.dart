@@ -606,7 +606,10 @@ class _ProgressPageState extends State<ProgressPage>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SpeechSessionDetailsPage(session: session),
+        builder: (context) => SpeechSessionDetailsPage(
+          session: session,
+          displayMode: SpeechSessionDisplayMode.fullScreen,
+        ),
       ),
     );
   }
@@ -1024,63 +1027,22 @@ class _ProgressPageState extends State<ProgressPage>
         initialChildSize: 0.9,
         maxChildSize: 0.9,
         minChildSize: 0.5,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        session.topic,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Session Date: ${DateFormat('MMM d, y').format(session.timestamp)}',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                  Text(
-                    'Duration: ${session.duration} seconds',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Speech Content',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    session.speechText,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        builder: (context, scrollController) => SpeechSessionDetails(
+          session: session,
+          displayMode: SpeechSessionDisplayMode.bottomSheet,
+          scrollController: scrollController,
+          onClose: () => Navigator.pop(context),
         ),
       ),
     );
+  }
+
+  // Helper method to get color based on metric score
+  Color _getMetricColor(double score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.amber;
+    if (score >= 40) return Colors.orange;
+    return Colors.red;
   }
 
   // Helper method to launch URLs
@@ -1092,49 +1054,321 @@ class _ProgressPageState extends State<ProgressPage>
   }
 }
 
+// Enum to define display modes for the speech session details
+enum SpeechSessionDisplayMode {
+  fullScreen,
+  bottomSheet,
+}
+
+// Unified page for displaying speech session details
 class SpeechSessionDetailsPage extends StatelessWidget {
   final dynamic session;
+  final SpeechSessionDisplayMode displayMode;
 
-  const SpeechSessionDetailsPage({Key? key, required this.session})
-      : super(key: key);
+  const SpeechSessionDetailsPage({
+    Key? key,
+    required this.session,
+    this.displayMode = SpeechSessionDisplayMode.fullScreen,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final timestamp = session['timestamp'] != null
-        ? DateTime.fromMillisecondsSinceEpoch(
-            session['timestamp']['_seconds'] * 1000)
-        : DateTime.now();
+    // For full screen mode, wrap in Scaffold with AppBar
+    if (displayMode == SpeechSessionDisplayMode.fullScreen) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Speech Details'),
+        ),
+        body: SpeechSessionDetails(
+          session: session,
+          displayMode: displayMode,
+        ),
+      );
+    } else {
+      // For other modes, return the details directly
+      return SpeechSessionDetails(
+        session: session,
+        displayMode: displayMode,
+      );
+    }
+  }
+}
+
+// Core component that shows the session details content
+class SpeechSessionDetails extends StatelessWidget {
+  final dynamic session;
+  final SpeechSessionDisplayMode displayMode;
+  final ScrollController? scrollController;
+  final VoidCallback? onClose;
+
+  const SpeechSessionDetails({
+    Key? key,
+    required this.session,
+    this.displayMode = SpeechSessionDisplayMode.fullScreen,
+    this.scrollController,
+    this.onClose,
+  }) : super(key: key);
+
+  // Helper method for color coding metric scores
+  Color _getMetricColor(double score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.amber;
+    if (score >= 40) return Colors.orange;
+    return Colors.red;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Get formatted date
+    DateTime timestamp;
+    try {
+      if (session is Map) {
+        timestamp = session['timestamp'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(
+                session['timestamp']['_seconds'] * 1000)
+            : DateTime.now();
+      } else {
+        // SpeechSession object
+        timestamp = (session as SpeechSession).timestamp;
+      }
+    } catch (e) {
+      timestamp = DateTime.now();
+    }
+
     final formattedDate = DateFormat('MMMM d, yyyy - h:mm a').format(timestamp);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Speech Details'),
+    // Extract data differently based on session type
+    final analysis = session is Map ? (session['analysisResults'] ?? {}) : null;
+    final speechText = session is Map
+        ? (session['transcript'] ?? 'No transcript available')
+        : (session as SpeechSession).speechText;
+    final topicOrTitle =
+        session is Map ? 'Speech Session' : (session as SpeechSession).topic;
+
+    final duration = session is Map
+        ? (session['duration'] ?? 0)
+        : (session as SpeechSession).duration;
+
+    // Prepare the UI based on display mode
+    final contentPadding = displayMode == SpeechSessionDisplayMode.fullScreen
+        ? const EdgeInsets.all(16)
+        : const EdgeInsets.all(24);
+
+    // Build the main content
+    Widget content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Only show close button and header for bottom sheet mode
+        if (displayMode == SpeechSessionDisplayMode.bottomSheet)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                topicOrTitle,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: onClose,
+              ),
+            ],
+          ),
+
+        // Date and duration info
+        if (displayMode == SpeechSessionDisplayMode.bottomSheet) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Session Date: ${DateFormat('MMM d, y').format(timestamp)}',
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+          Text(
+            'Duration: $duration seconds',
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+        ] else ...[
+          Text(
+            formattedDate,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+        ],
+
+        // Different sections based on type of session
+        if (session is Map) ...[
+          const SizedBox(height: 16),
+          _buildScoreSection(analysis),
+          const SizedBox(height: 24),
+          _buildTranscriptSection(context, analysis),
+          const SizedBox(height: 24),
+          _buildAIFeedbackSection(analysis),
+          if (_hasFillerWords(analysis)) ...[
+            const SizedBox(height: 24),
+            _buildFillerWordsSection(analysis),
+          ],
+          if (_hasRepeatedWords(analysis)) ...[
+            const SizedBox(height: 24),
+            _buildRepeatedWordsSection(analysis),
+          ],
+          const SizedBox(height: 24),
+          _buildDetailedAnalysisSection(analysis),
+        ] else ...[
+          // SpeechSession object display
+          const SizedBox(height: 24),
+          const Text(
+            'Speech Content',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            speechText,
+            style: const TextStyle(fontSize: 16),
+          ),
+
+          // AI Feedback Section for SpeechSession object
+          const SizedBox(height: 24),
+          const Text(
+            'AI Feedback',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildAIFeedbackSectionForSpeechSession(session as SpeechSession),
+        ],
+      ],
+    );
+
+    // Wrap the content based on display mode
+    if (displayMode == SpeechSessionDisplayMode.bottomSheet) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: contentPadding,
+            child: content,
+          ),
+        ),
+      );
+    } else {
+      return SingleChildScrollView(
+        padding: contentPadding,
+        child: content,
+      );
+    }
+  }
+
+  // Helper method to build AI feedback section for SpeechSession object
+  Widget _buildAIFeedbackSectionForSpeechSession(SpeechSession session) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF48CAE4).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF48CAE4).withOpacity(0.3),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              formattedDate,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Display feedback from the session
+          if (session.feedback.isNotEmpty)
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: session.feedback.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('• ', style: TextStyle(fontSize: 16)),
+                      Expanded(
+                        child: Text(
+                          session.feedback[index],
+                          style: const TextStyle(fontSize: 16, height: 1.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            )
+          else
+            const Text(
+              'No AI feedback available for this session.',
               style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildScoreSection(),
-            const SizedBox(height: 24),
-            _buildTranscriptSection(),
-            const SizedBox(height: 24),
-            _buildFeedbackSection(),
-          ],
-        ),
+
+          // Show metrics section
+          const SizedBox(height: 16),
+          const Text(
+            'Performance Metrics:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: session.metrics.entries.map<Widget>((entry) {
+              final color = _getMetricColor(entry.value);
+              return Chip(
+                backgroundColor: color.withOpacity(0.1),
+                side: BorderSide(color: color.withOpacity(0.3)),
+                label: Text(
+                  '${entry.key}: ${entry.value.toInt()}',
+                  style: TextStyle(color: color),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildScoreSection() {
+  bool _hasFillerWords(Map<String, dynamic> analysis) {
+    final fillerWords = analysis['fillerWords'] as List<dynamic>?;
+    return fillerWords != null && fillerWords.isNotEmpty;
+  }
+
+  bool _hasRepeatedWords(Map<String, dynamic> analysis) {
+    final repeatedWords = analysis['repeatedWords'] as List<dynamic>?;
+    return repeatedWords != null && repeatedWords.isNotEmpty;
+  }
+
+  Widget _buildScoreSection(Map<String, dynamic> analysis) {
+    final overallScore = analysis['overallScore'] ?? 0;
+    final confidenceScore = analysis['confidenceScore'] ?? 0;
+
+    // Extract speech stats if available
+    final speechStats = analysis['speechStats'] as Map<String, dynamic>? ?? {};
+    final wordCount = speechStats['wordCount'] ?? 0;
+    final sentenceCount = speechStats['sentenceCount'] ?? 0;
+    final avgWordsPerSentence = speechStats['avgWordsPerSentence'] ?? 0.0;
+    final fillerWordPercentage = speechStats['fillerWordPercentage'] ?? 0.0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1160,99 +1394,41 @@ class SpeechSessionDetailsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildScoreRow('Overall Score', session['analysis']['overallScore']),
+          _buildScoreRow('Overall Score', overallScore),
           const SizedBox(height: 12),
-          _buildScoreRow('Confidence', session['analysis']['confidenceScore']),
-          const SizedBox(height: 12),
-          _buildScoreRow('Grammar', session['analysis']['grammarScore']),
-          const SizedBox(height: 12),
-          _buildScoreRow('Clarity', session['analysis']['clarityScore']),
+          _buildScoreRow('Confidence', confidenceScore),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildMetricItem(
-                  'Speech Rate', '${session['analysis']['speechRate']} WPM'),
-              const SizedBox(width: 16),
-              _buildMetricItem(
-                  'Filler Words', '${session['analysis']['fillerWordCount']}'),
-              const SizedBox(width: 16),
-              _buildMetricItem(
-                  'Pauses', '${session['analysis']['pauseCount']}'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildScoreRow(String label, int score) {
-    Color color;
-    if (score >= 80) {
-      color = Colors.green;
-    } else if (score >= 60) {
-      color = Colors.orange;
-    } else {
-      color = Colors.red;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 16),
-            ),
-            Text(
-              '$score',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        LinearProgressIndicator(
-          value: score / 100,
-          backgroundColor: Colors.grey[200],
-          valueColor: AlwaysStoppedAnimation<Color>(color),
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMetricItem(String label, String value) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
+          // Speech statistics section
+          const Text(
+            'Speech Statistics',
             style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 8),
+          _buildMetricItem('Word Count', '$wordCount'),
+          const SizedBox(height: 8),
+          _buildMetricItem('Sentence Count', '$sentenceCount'),
+          const SizedBox(height: 8),
+          _buildMetricItem('Avg. Words per Sentence',
+              '${avgWordsPerSentence.toStringAsFixed(1)}'),
+          const SizedBox(height: 8),
+          _buildMetricItem(
+              'Filler Word %', '${fillerWordPercentage.toStringAsFixed(1)}%'),
         ],
       ),
     );
   }
 
-  Widget _buildTranscriptSection() {
+  Widget _buildTranscriptSection(
+      BuildContext context, Map<String, dynamic> analysis) {
+    final transcript = analysis['transcript'] ??
+        (session is Map ? session['transcript'] : null) ??
+        'No transcript available';
+    final fillerWords = analysis['fillerWords'] as List<dynamic>? ?? [];
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1278,20 +1454,57 @@ class SpeechSessionDetailsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            session['transcript'],
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
+          _buildHighlightedTranscript(transcript, fillerWords, context),
         ],
       ),
     );
   }
 
-  Widget _buildFeedbackSection() {
-    final feedback = session['analysis']['feedback'] as List<dynamic>;
+  Widget _buildHighlightedTranscript(
+      String transcript, List<dynamic> fillerWords, BuildContext context) {
+    // If no filler words, just return the plain transcript
+    if (fillerWords.isEmpty) {
+      return Text(
+        transcript,
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.5,
+        ),
+      );
+    }
+
+    // Extract just the words from the filler words list
+    final fillerWordsList =
+        fillerWords.map((fw) => fw['word'].toString().toLowerCase()).toList();
+
+    // Split the transcript into words while preserving spacing and punctuation
+    final pattern = RegExp(r'(\s+|[.,!?;:()-])|(\b\w+\b)');
+    final matches = pattern.allMatches(transcript);
+
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(fontSize: 16, height: 1.5, color: Colors.black),
+        children: matches.map((match) {
+          final word = match.group(0) ?? '';
+          final isFillerWord = fillerWordsList.contains(word.toLowerCase());
+
+          return TextSpan(
+            text: word,
+            style: isFillerWord
+                ? const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    backgroundColor: Color(0x33FF0000),
+                  )
+                : null,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildAIFeedbackSection(Map<String, dynamic> analysis) {
+    final feedback = analysis['feedback'] ?? 'No feedback available';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1311,33 +1524,256 @@ class SpeechSessionDetailsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Feedback',
+            'AI Feedback',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          ...feedback.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('• ', style: TextStyle(fontSize: 16)),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
+          Text(
+            feedback,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFillerWordsSection(Map<String, dynamic> analysis) {
+    final fillerWords = analysis['fillerWords'] as List<dynamic>? ?? [];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Filler Words',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: fillerWords.map<Widget>((filler) {
+              return Chip(
+                backgroundColor: Colors.red.withOpacity(0.1),
+                label: Text('${filler['word']} (${filler['count']})'),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRepeatedWordsSection(Map<String, dynamic> analysis) {
+    final repeatedWords = analysis['repeatedWords'] as List<dynamic>? ?? [];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Repeated Words',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: repeatedWords.map<Widget>((repeated) {
+              return Chip(
+                backgroundColor: Colors.amber.withOpacity(0.1),
+                label: Text('${repeated['word']} (${repeated['count']})'),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedAnalysisSection(Map<String, dynamic> analysis) {
+    final detailedAnalysis =
+        analysis['detailedAnalysis'] as List<dynamic>? ?? [];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Detailed Analysis',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...detailedAnalysis.map((item) => _buildAnalysisItem(item)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalysisItem(Map<String, dynamic> item) {
+    final category = item['category'] ?? 'Unknown';
+    final score = (item['score'] as num?)?.toDouble() ?? 0.0;
+    final feedback = item['feedback'] ?? 'No details available';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                category,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+              ),
+              Text(
+                '${score.toInt()}/100',
+                style: TextStyle(
+                  color: _getScoreColor(score),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 100,
+              color: _getScoreColor(score),
+              backgroundColor: Colors.grey.withOpacity(0.2),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            feedback,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getScoreColor(double score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.amber;
+    if (score >= 40) return Colors.orange;
+    return Colors.red;
+  }
+
+  Widget _buildScoreRow(String label, int score) {
+    Color color = _getScoreColor(score.toDouble());
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 16),
+            ),
+            Text(
+              '$score',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: score / 100,
+          color: color,
+          backgroundColor: Colors.grey.withOpacity(0.2),
+          minHeight: 8,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricItem(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

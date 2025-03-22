@@ -22,6 +22,10 @@ class _SignupPageState extends State<SignupPage> {
   bool _agreedToTerms = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String _selectedRole = 'child'; // Default role
+
+  // Define available roles
+  final List<String> _roles = ['child', 'parent', 'therapist'];
 
   Future<void> _signup() async {
     if (_firstNameController.text.isEmpty ||
@@ -81,6 +85,7 @@ class _SignupPageState extends State<SignupPage> {
           'lastName': _lastNameController.text.trim(),
           'displayName':
               '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+          'role': _selectedRole,
           'createdAt': FieldValue.serverTimestamp(),
           'lastLogin': FieldValue.serverTimestamp(),
           'challenges': [],
@@ -102,6 +107,7 @@ class _SignupPageState extends State<SignupPage> {
               'email': _emailController.text.trim(),
               'firstName': _firstNameController.text.trim(),
               'lastName': _lastNameController.text.trim(),
+              'role': _selectedRole,
             }),
           );
 
@@ -264,6 +270,50 @@ class _SignupPageState extends State<SignupPage> {
                               horizontal: 16,
                               vertical: 12,
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Role selection dropdown
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Role',
+                              prefixIcon: Icon(Icons.badge_outlined),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
+                            ),
+                            value: _selectedRole,
+                            items: _roles.map((String role) {
+                              return DropdownMenuItem<String>(
+                                value: role,
+                                child: Text(
+                                  role.substring(0, 1).toUpperCase() +
+                                      role.substring(1),
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  _selectedRole = newValue;
+                                });
+                              }
+                            },
+                            isExpanded: true,
                           ),
                         ),
                         const SizedBox(height: 16),
