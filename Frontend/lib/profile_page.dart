@@ -376,8 +376,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const TherapistDashboardPage(),
+                              builder: (context) => const TherapistDashboard(),
                             ),
                           );
                         },

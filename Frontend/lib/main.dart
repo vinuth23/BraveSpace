@@ -193,7 +193,7 @@ class AuthGate extends StatelessWidget {
 
                   // Navigate based on user role
                   if (userRole == 'therapist' || userRole == 'parent') {
-                    return const TherapistDashboardPage();
+                    return const TherapistDashboard();
                   } else {
                     // Default to child role
                     return const MainNavigator();
