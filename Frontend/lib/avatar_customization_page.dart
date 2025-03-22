@@ -29,9 +29,9 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
   String selectedCategory = 'Basic';
   
   // Avatar properties
-  Color selectedSkinTone = const Color(0xFFEAC393); // Default middle skin tone
+  Color selectedSkinTone = const Color(0xFFEAC393); // Default to Medium skin tone
   int selectedFaceIndex = 0;
-  int selectedHeadIndex = 0;
+  int selectedHeadIndex = 0; // Default to Head 1
   
   // Original values for reset functionality
   late Color originalSkinTone;
@@ -48,7 +48,6 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
 
   // Skin tone options
   final List<Color> skinTones = [
-    const Color(0xFFF8E5C9), // Lightest
     const Color(0xFFFFDCB5), // Light
     const Color(0xFFEAC393), // Medium
     const Color(0xFFBF8A63), // Dark
@@ -71,22 +70,47 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     'assets/images/head4.png',
   ];
 
-  // Add a mapping between skin tones and their corresponding avatar images
-  final Map<Color, String> skinToneImages = {
-    const Color(0xFFF8E5C9): 'assets/images/avatar_lightest.png', // Lightest
-    const Color(0xFFFFDCB5): 'assets/images/avatar_light.png',    // Light
-    const Color(0xFFEAC393): 'assets/images/avatar_medium.png',   // Medium
-    const Color(0xFFBF8A63): 'assets/images/avatar_dark.png',     // Dark
-    const Color(0xFF7D5339): 'assets/images/avatar_darkest.png',  // Darkest
+  // Mapping for skin tones and their corresponding avatar images
+
+
+
+
+
+  // Mapping for head images with corresponding skin tone versions
+  final Map<int, Map<Color, String>> headImagesBySkinTone = {
+    0: {
+      const Color(0xFFFFDCB5): 'assets/images/head1_light.png',
+      const Color(0xFFEAC393): 'assets/images/head1_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head1_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head1_darkest.png',
+    },
+    1: {
+      const Color(0xFFFFDCB5): 'assets/images/head2_light.png',
+      const Color(0xFFEAC393): 'assets/images/head2_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head2_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head2_darkest.png',
+    },
+    2: {
+      const Color(0xFFFFDCB5): 'assets/images/head3_light.png',
+      const Color(0xFFEAC393): 'assets/images/head3_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head3_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head3_darkest.png',
+    },
+    3: {
+      const Color(0xFFFFDCB5): 'assets/images/head4_light.png',
+      const Color(0xFFEAC393): 'assets/images/head4_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head4_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head4_darkest.png',
+    },
   };
 
   @override
   void initState() {
     super.initState();
     // Initialize original values
-    originalSkinTone = selectedSkinTone;
+    originalSkinTone = selectedSkinTone; // Default to Medium skin tone
     originalFaceIndex = selectedFaceIndex;
-    originalHeadIndex = selectedHeadIndex;
+    originalHeadIndex = selectedHeadIndex; // Default to Head 1
   }
 
   void resetChanges() {
@@ -163,16 +187,17 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                 alignment: Alignment.center,
                 children: [
 
-                  // Avatar image based on selected skin tone
-                  Image.asset(
-                    skinToneImages[selectedSkinTone] ?? 'assets/images/avatar_default.png',
-                    width: 120,
-                    height: 120,
-                  ),
+                 
+                
+                 
+                
+                 
+                 
 
-                  // Head preview
+                  // Head preview based on selected skin tone and head index
                   Image.asset(
-                    headPreviews[selectedHeadIndex],
+                    headImagesBySkinTone[selectedHeadIndex]?[selectedSkinTone] ??
+                        'assets/images/head_default.png',
                     width: 120,
                     height: 120,
                   ),
