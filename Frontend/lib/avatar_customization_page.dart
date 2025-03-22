@@ -372,12 +372,8 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                   // Add the TextButton here for navigation
                   TextButton(
                     onPressed: () {
-                      final mainNavigator =
-                          context.findAncestorStateOfType<MainNavigatorState>();
-                      if (mainNavigator != null) {
-                        mainNavigator.onItemTapped(2);
-                        Navigator.pop(context);
-                      }
+                      // The simplest approach - just pop back to where we came from
+                      Navigator.of(context).pop();
                     },
                     child: const Row(
                       children: [
@@ -515,14 +511,8 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
         size: 24,
       ),
       onPressed: () {
+        // Simply pop back to the main navigator
         Navigator.pop(context);
-        Future.delayed(const Duration(milliseconds: 100), () {
-          final mainNavigator =
-              context.findAncestorStateOfType<MainNavigatorState>();
-          if (mainNavigator != null) {
-            mainNavigator.onItemTapped(index);
-          }
-        });
       },
     );
   }
@@ -530,14 +520,8 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
   Widget _buildCenterVRButton() {
     return GestureDetector(
       onTap: () {
+        // Simply pop back to the main navigator
         Navigator.pop(context);
-        Future.delayed(const Duration(milliseconds: 100), () {
-          final mainNavigator =
-              context.findAncestorStateOfType<MainNavigatorState>();
-          if (mainNavigator != null) {
-            mainNavigator.onItemTapped(2);
-          }
-        });
       },
       child: Container(
         width: 48,
