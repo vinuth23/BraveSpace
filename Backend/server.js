@@ -122,6 +122,36 @@ function verifyToken(req, res, next) {
     });
 }
 
+// Middleware to verify user role
+function verifyRole(allowedRoles) {
+  return async (req, res, next) => {
+    try {
+      const userId = req.user.uid;
+      const userDoc = await db.collection('users').doc(userId).get();
+      
+      if (!userDoc.exists) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const userData = userDoc.data();
+      const userRole = userData.role || 'child'; // Default to child if no role is set
+      
+      if (Array.isArray(allowedRoles) && allowedRoles.includes(userRole)) {
+        req.userRole = userRole;
+        next();
+      } else if (typeof allowedRoles === 'string' && allowedRoles === userRole) {
+        req.userRole = userRole;
+        next();
+      } else {
+        res.status(403).json({ error: "Access denied: Insufficient role permissions" });
+      }
+    } catch (error) {
+      console.error("Role verification error:", error);
+      res.status(500).json({ error: "Internal server error during role verification" });
+    }
+  };
+}
+
 // Upload VR video route (Developer uploads)
 app.post("/upload/vr-video", upload.single("video"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
@@ -141,17 +171,21 @@ app.post("/upload/vr-video", upload.single("video"), async (req, res) => {
 
 // User Sign-Up (Create a new user with email and password)
 app.post("/signup", async (req, res) => {
-  const { uid, email, firstName, lastName } = req.body;
+  const { uid, email, firstName, lastName, role } = req.body;
 
   if (!uid || !email || !firstName || !lastName) {
     return res.status(400).send({ error: "All fields are required!" });
   }
 
+  // Default role to 'child' if not provided
+  const userRole = role || 'child';
+  
   try {
     await db.collection('users').doc(uid).set({
       firstName,
       lastName,
       email,
+      role: userRole,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -161,6 +195,7 @@ app.post("/signup", async (req, res) => {
       message: "User data created successfully!",
       uid: uid,
       fullName: `${firstName} ${lastName}`,
+      role: userRole
     });
   } catch (error) {
     res.status(400).send({ error: error.message });
@@ -649,25 +684,220 @@ app.get("/api/speech/progress", verifyToken, async (req, res) => {
     
     res.json({ progress: progressData });
   } catch (error) {
-    console.error("Error fetching progress data:", error);
-    
-    // If it's a missing index error, provide helpful information
+    console.error("Error fetching speech progress:", error);
     if (error.code === 'MISSING_INDEX') {
-      return res.json({ 
-        progress: getMockProgressData(),
-        mockData: true,
-        error: "Missing Firestore index",
-        message: "The database query requires an index to be created. Please follow the link to create it.",
-        indexUrl: error.indexUrl
+      res.status(500).json({ 
+        error: "Database query requires indexing", 
+        indexUrl: error.indexUrl 
       });
+    } else {
+      res.status(500).json({ error: "Error fetching speech progress" });
+    }
+  }
+});
+
+// Therapist/Parent API - Get child progress
+app.get("/api/therapist/child-progress/:childId", verifyToken, verifyRole(['therapist', 'parent']), async (req, res) => {
+  const therapistId = req.user.uid;
+  const childId = req.params.childId;
+  
+  try {
+    // First verify that the therapist/parent has a relationship with this child
+    const relationshipSnapshot = await db.collection("user_relationships")
+      .where("therapistId", "==", therapistId)
+      .where("childId", "==", childId)
+      .limit(1)
+      .get();
+    
+    // If no relationship found, check parent relationship
+    if (relationshipSnapshot.empty && req.userRole === 'parent') {
+      const parentRelationshipSnapshot = await db.collection("user_relationships")
+        .where("parentId", "==", therapistId)
+        .where("childId", "==", childId)
+        .limit(1)
+        .get();
+        
+      if (parentRelationshipSnapshot.empty) {
+        return res.status(403).json({ error: "Not authorized to view this child's data" });
+      }
+    } else if (relationshipSnapshot.empty) {
+      return res.status(403).json({ error: "Not authorized to view this child's data" });
     }
     
-    // Return mock progress data instead of error
-    res.json({ 
-      progress: getMockProgressData(),
-      mockData: true,
-      error: "Using mock data due to database error: " + error.message
+    // Get child progress data
+    const sessionsSnapshot = await db.collection("speech_analysis")
+      .where("userId", "==", childId)
+      .orderBy("timestamp", "asc")
+      .get();
+    
+    if (sessionsSnapshot.empty) {
+      return res.json({ progress: [], childInfo: null });
+    }
+    
+    // Get child info
+    const childDoc = await db.collection("users").doc(childId).get();
+    let childInfo = null;
+    
+    if (childDoc.exists) {
+      const childData = childDoc.data();
+      childInfo = {
+        uid: childId,
+        firstName: childData.firstName,
+        lastName: childData.lastName,
+        fullName: `${childData.firstName} ${childData.lastName}`,
+      };
+    }
+    
+    // Format progress data
+    const progressData = [];
+    sessionsSnapshot.forEach(doc => {
+      const data = doc.data();
+      progressData.push({
+        id: doc.id,
+        timestamp: data.timestamp,
+        transcript: data.transcript,
+        analysis: data.analysis,
+      });
     });
+    
+    res.json({ 
+      progress: progressData,
+      childInfo
+    });
+    
+  } catch (error) {
+    console.error("Error fetching child progress:", error);
+    res.status(500).json({ error: "Error fetching child progress data" });
+  }
+});
+
+// Therapist/Parent API - Get assigned children
+app.get("/api/therapist/children", verifyToken, verifyRole(['therapist', 'parent']), async (req, res) => {
+  const userId = req.user.uid;
+  const userRole = req.userRole;
+  
+  try {
+    // Query based on role
+    let relationshipSnapshot;
+    if (userRole === 'therapist') {
+      relationshipSnapshot = await db.collection("user_relationships")
+        .where("therapistId", "==", userId)
+        .get();
+    } else {
+      // Parent role
+      relationshipSnapshot = await db.collection("user_relationships")
+        .where("parentId", "==", userId)
+        .get();
+    }
+    
+    if (relationshipSnapshot.empty) {
+      return res.json({ children: [] });
+    }
+    
+    // Extract childIds
+    const childIds = [];
+    relationshipSnapshot.forEach(doc => {
+      const data = doc.data();
+      childIds.push(data.childId);
+    });
+    
+    // Get children information
+    const children = [];
+    for (const childId of childIds) {
+      const childDoc = await db.collection("users").doc(childId).get();
+      if (childDoc.exists) {
+        const childData = childDoc.data();
+        children.push({
+          uid: childId,
+          firstName: childData.firstName,
+          lastName: childData.lastName,
+          fullName: `${childData.firstName} ${childData.lastName}`,
+          email: childData.email,
+        });
+      }
+    }
+    
+    res.json({ children });
+    
+  } catch (error) {
+    console.error("Error fetching assigned children:", error);
+    res.status(500).json({ error: "Error fetching assigned children" });
+  }
+});
+
+// Therapist/Parent API - Assign child to therapist/parent
+app.post("/api/therapist/assign-child", verifyToken, verifyRole(['therapist', 'parent']), async (req, res) => {
+  const userId = req.user.uid;
+  const { childEmail } = req.body;
+  const userRole = req.userRole;
+  
+  if (!childEmail) {
+    return res.status(400).json({ error: "Child email is required" });
+  }
+  
+  try {
+    // Find child by email
+    const usersSnapshot = await db.collection("users")
+      .where("email", "==", childEmail)
+      .where("role", "==", "child")
+      .limit(1)
+      .get();
+    
+    if (usersSnapshot.empty) {
+      return res.status(404).json({ error: "Child not found or not registered as a child" });
+    }
+    
+    const childDoc = usersSnapshot.docs[0];
+    const childId = childDoc.id;
+    const childData = childDoc.data();
+    
+    // Check if relationship already exists
+    let relationshipQuery;
+    if (userRole === 'therapist') {
+      relationshipQuery = db.collection("user_relationships")
+        .where("therapistId", "==", userId)
+        .where("childId", "==", childId);
+    } else {
+      // Parent role
+      relationshipQuery = db.collection("user_relationships")
+        .where("parentId", "==", userId)
+        .where("childId", "==", childId);
+    }
+    
+    const existingRelationship = await relationshipQuery.get();
+    
+    if (!existingRelationship.empty) {
+      return res.status(400).json({ error: "Relationship already exists" });
+    }
+    
+    // Create relationship
+    const relationshipData = {
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      childId: childId
+    };
+    
+    if (userRole === 'therapist') {
+      relationshipData.therapistId = userId;
+    } else {
+      relationshipData.parentId = userId;
+    }
+    
+    await db.collection("user_relationships").add(relationshipData);
+    
+    res.status(201).json({
+      message: "Child assigned successfully",
+      child: {
+        uid: childId,
+        firstName: childData.firstName,
+        lastName: childData.lastName,
+        fullName: `${childData.firstName} ${childData.lastName}`,
+        email: childData.email,
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error assigning child:", error);
+    res.status(500).json({ error: "Error assigning child" });
   }
 });
 
@@ -871,68 +1101,14 @@ async function analyzeSpeech(audioFilePath) {
       };
     }
     
-    // For now, we'll use a simple scoring mechanism
-    // In a real implementation, this would use more sophisticated NLP
-    const wordCount = transcript.split(/\s+/).length;
-    const sentenceCount = transcript.split(/[.!?]+/).filter(Boolean).length;
-    
-    // Calculate average words per sentence (a simple fluency metric)
-    const avgWordsPerSentence = sentenceCount > 0 ? wordCount / sentenceCount : 0;
-    
-    // Calculate a simple score based on length and structure
-    // This is just a placeholder for actual analysis
-    let overallScore = 0;
-    let feedback = '';
-    let confidenceScore = 0;
-    
-    if (wordCount > 50) {
-      overallScore = 80;
-      confidenceScore = 75;
-      feedback = 'Good length speech with clear articulation.';
-    } else if (wordCount > 20) {
-      overallScore = 60;
-      confidenceScore = 60;
-      feedback = 'Moderate length speech, could be more detailed.';
-    } else {
-      overallScore = 40;
-      confidenceScore = 50;
-      feedback = 'Speech too short for comprehensive analysis.';
-    }
-    
-    // Adjust score based on sentence structure
-    if (avgWordsPerSentence > 25) {
-      overallScore -= 10;
-      feedback += ' Sentences are too long, consider breaking them up.';
-    } else if (avgWordsPerSentence < 5 && sentenceCount > 3) {
-      overallScore -= 5;
-      feedback += ' Sentences are very short, consider more complex structures.';
-    }
-    
-    // Create detailed analysis
-    const detailedAnalysis = [
-      {
-        category: 'Length',
-        score: wordCount > 50 ? 90 : (wordCount > 20 ? 70 : 40),
-        feedback: `Speech contains ${wordCount} words.`
-      },
-      {
-        category: 'Structure',
-        score: avgWordsPerSentence > 5 && avgWordsPerSentence < 20 ? 85 : 60,
-        feedback: `Average of ${avgWordsPerSentence.toFixed(1)} words per sentence.`
-      }
-    ];
+    // Perform detailed analysis
+    const analysisResult = performDetailedAnalysis(transcript);
     
     // Return the analysis results
     return {
       status: 200,
       message: 'Speech analysis completed successfully',
-      data: {
-        transcript,
-        overallScore,
-        confidenceScore,
-        feedback,
-        detailedAnalysis
-      }
+      data: analysisResult
     };
   } catch (error) {
     console.error('Error in analyzeSpeech:', error);
@@ -942,6 +1118,220 @@ async function analyzeSpeech(audioFilePath) {
       data: null
     };
   }
+}
+
+// Detailed speech analysis function
+function performDetailedAnalysis(transcript) {
+  // Basic statistics
+  const words = transcript.split(/\s+/);
+  const wordCount = words.length;
+  const sentences = transcript.split(/[.!?]+/).filter(Boolean);
+  const sentenceCount = sentences.length;
+  const avgWordsPerSentence = sentenceCount > 0 ? wordCount / sentenceCount : 0;
+  
+  // Expanded filler word analysis with more variations
+  const fillerWords = [
+    'um', 'uh', 'uhm', 'er', 'ah', 'like', 'actually', 'basically', 'literally', 
+    'sort of', 'kind of', 'you know', 'i mean', 'so', 'well', 'right', 'anyway',
+    'honestly', 'frankly', 'obviously', 'simply', 'just', 'totally', 'essentially'
+  ];
+  const fillerWordCounts = {};
+  let totalFillerWords = 0;
+  
+  // Convert transcript to lowercase for case-insensitive matching
+  const lowerTranscript = transcript.toLowerCase();
+  
+  // Count filler words with enhanced detection for word boundaries
+  fillerWords.forEach(filler => {
+    // For multi-word fillers
+    if (filler.includes(' ')) {
+      const regex = new RegExp(`\\b${filler.replace(/ /g, '\\s+')}\\b`, 'gi');
+      const matches = lowerTranscript.match(regex);
+      const count = matches ? matches.length : 0;
+      
+      if (count > 0) {
+        fillerWordCounts[filler] = count;
+        totalFillerWords += count;
+      }
+    } else {
+      // For single-word fillers, more lenient matching
+      const regex = new RegExp(`\\b${filler}\\b`, 'gi');
+      const matches = lowerTranscript.match(regex);
+      const count = matches ? matches.length : 0;
+      
+      if (count > 0) {
+        fillerWordCounts[filler] = count;
+        totalFillerWords += count;
+      }
+    }
+  });
+
+  // Also check for partial repetitions at beginning of sentences
+  sentences.forEach(sentence => {
+    const trimmedSentence = sentence.trim().toLowerCase();
+    if (trimmedSentence.startsWith('so ') || 
+        trimmedSentence.startsWith('and ') || 
+        trimmedSentence.startsWith('but ') ||
+        trimmedSentence.startsWith('like ')) {
+      
+      const firstWord = trimmedSentence.split(' ')[0];
+      fillerWordCounts[firstWord] = (fillerWordCounts[firstWord] || 0) + 1;
+      totalFillerWords += 1;
+    }
+  });
+  
+  // Calculate filler word percentage
+  const fillerWordPercentage = (totalFillerWords / wordCount) * 100;
+  
+  // Repeated words/phrases analysis (excluding common words)
+  const commonWords = ['i', 'you', 'the', 'a', 'an', 'and', 'but', 'or', 'in', 'on', 'at', 'to', 'for', 'with', 'is', 'are', 'was', 'were'];
+  const wordFrequency = {};
+  
+  // Count word frequencies
+  words.forEach(word => {
+    const cleanWord = word.toLowerCase().replace(/[.,!?;:'"()\-]/g, '');
+    if (cleanWord && !commonWords.includes(cleanWord)) {
+      wordFrequency[cleanWord] = (wordFrequency[cleanWord] || 0) + 1;
+    }
+  });
+  
+  // Find repeated words (occurring more than twice)
+  const repeatedWords = Object.entries(wordFrequency)
+    .filter(([word, count]) => count > 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  
+  // Sentiment analysis using natural tokenizer and analyzer
+  const tokenizer = new natural.WordTokenizer();
+  const analyzer = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn');
+  const tokenizedText = tokenizer.tokenize(transcript);
+  const sentimentScore = analyzer.getSentiment(tokenizedText);
+  
+  // Calculate pauses (approximated by punctuation)
+  const pauseIndicators = transcript.match(/[.,!?;:\-]/g);
+  const pauseCount = pauseIndicators ? pauseIndicators.length : 0;
+  const pausesPerSentence = sentenceCount > 0 ? pauseCount / sentenceCount : 0;
+  
+  // Calculate confidence score
+  // Lower score if: many filler words, excessive repetition, or too many/too few pauses
+  let confidenceScore = 75; // Start with a base score
+  
+  // Adjust based on filler words
+  if (fillerWordPercentage > 10) {
+    confidenceScore -= 15;
+  } else if (fillerWordPercentage > 5) {
+    confidenceScore -= 7;
+  }
+  
+  // Adjust based on repeated words
+  if (repeatedWords.length > 3) {
+    confidenceScore -= 10;
+  } else if (repeatedWords.length > 1) {
+    confidenceScore -= 5;
+  }
+  
+  // Adjust based on sentence structure
+  if (avgWordsPerSentence > 25) {
+    confidenceScore -= 10;
+  } else if (avgWordsPerSentence < 5 && sentenceCount > 3) {
+    confidenceScore -= 5;
+  }
+  
+  // Calculate overall score
+  let overallScore = 0;
+  
+  if (wordCount > 100) {
+    overallScore = 85;
+  } else if (wordCount > 50) {
+    overallScore = 75;
+  } else if (wordCount > 20) {
+    overallScore = 60;
+  } else {
+    overallScore = 40;
+  }
+  
+  // Adjust overall score based on filler words and repetition
+  overallScore -= (fillerWordPercentage / 2);
+  overallScore -= Math.min(repeatedWords.length * 3, 15);
+  
+  // Ensure scores are in valid range
+  confidenceScore = Math.max(0, Math.min(100, Math.round(confidenceScore)));
+  overallScore = Math.max(0, Math.min(100, Math.round(overallScore)));
+  
+  // Generate personalized feedback
+  let feedback = '';
+  
+  if (wordCount < 20) {
+    feedback = 'Your speech was quite short. Try to elaborate more on your points.';
+  } else {
+    feedback = 'You made some good points in your speech.';
+  }
+  
+  if (fillerWordPercentage > 10) {
+    feedback += ' You used quite a few filler words, which can make you sound less confident.';
+  } else if (fillerWordPercentage > 5) {
+    feedback += ' Try to reduce some of the filler words for a more polished delivery.';
+  }
+  
+  if (repeatedWords.length > 2) {
+    feedback += ' You repeated some words frequently, which can make your message less engaging.';
+  }
+  
+  if (confidenceScore < 50) {
+    feedback += ' Practice can help improve your confidence and delivery.';
+  } else if (confidenceScore > 75) {
+    feedback += ' You sound quite confident in your delivery.';
+  }
+  
+  // Create detailed analysis categories
+  const detailedAnalysis = [
+    {
+      category: 'Length',
+      score: wordCount > 100 ? 90 : (wordCount > 50 ? 75 : (wordCount > 20 ? 60 : 40)),
+      feedback: `Speech contains ${wordCount} words.`
+    },
+    {
+      category: 'Structure',
+      score: avgWordsPerSentence > 5 && avgWordsPerSentence < 20 ? 85 : 60,
+      feedback: `Average of ${avgWordsPerSentence.toFixed(1)} words per sentence.`
+    },
+    {
+      category: 'Filler Words',
+      score: 100 - Math.min(fillerWordPercentage * 5, 100),
+      feedback: totalFillerWords > 0 ? 
+        `Used ${totalFillerWords} filler words (${fillerWordPercentage.toFixed(1)}% of speech).` : 
+        'No filler words detected - excellent!'
+    },
+    {
+      category: 'Repetition',
+      score: 100 - (repeatedWords.length * 10),
+      feedback: repeatedWords.length > 0 ? 
+        `Repeated ${repeatedWords.length} words/phrases frequently.` : 
+        'Good variety of words without excessive repetition.'
+    },
+    {
+      category: 'Tone',
+      score: Math.round((sentimentScore + 1) * 50), // Convert -1 to 1 scale to 0-100
+      feedback: sentimentScore > 0.3 ? 'Positive tone throughout.' : 
+               (sentimentScore < -0.3 ? 'Negative tone detected.' : 'Neutral tone throughout.')
+    }
+  ];
+  
+  return {
+    transcript,
+    overallScore,
+    confidenceScore,
+    feedback,
+    detailedAnalysis,
+    fillerWords: Object.entries(fillerWordCounts).map(([word, count]) => ({ word, count })),
+    repeatedWords: repeatedWords.map(([word, count]) => ({ word, count })),
+    speechStats: {
+      wordCount,
+      sentenceCount,
+      avgWordsPerSentence,
+      fillerWordPercentage
+    }
+  };
 }
 
 // Retrieve VR videos (User fetches from frontend)

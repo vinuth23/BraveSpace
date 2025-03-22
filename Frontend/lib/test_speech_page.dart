@@ -217,6 +217,350 @@ class _TestSpeechPageState extends State<TestSpeechPage> {
     }
   }
 
+  void _displayAnalysisResults(Map<String, dynamic> results) {
+    setState(() {
+      _analysisResults = results;
+      _isAnalyzing = false;
+    });
+
+    // Create the analysis results modal
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.8,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) {
+          // Extract data from analysis results
+          final transcript = results['transcript'] ?? 'No transcript available';
+          final overallScore = results['overallScore'] ?? 0;
+          final confidenceScore = results['confidenceScore'] ?? 0;
+          final feedback = results['feedback'] ?? 'No feedback available';
+          final detailedAnalysis =
+              results['detailedAnalysis'] as List<dynamic>? ?? [];
+
+          // New fields from enhanced analysis
+          final fillerWords = results['fillerWords'] as List<dynamic>? ?? [];
+          final repeatedWords =
+              results['repeatedWords'] as List<dynamic>? ?? [];
+          final speechStats =
+              results['speechStats'] as Map<String, dynamic>? ?? {};
+
+          return Container(
+            padding: const EdgeInsets.all(20),
+            child: ListView(
+              controller: scrollController,
+              children: [
+                // Header
+                const Center(
+                  child: Text(
+                    'Speech Analysis Results',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Overall Scores Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildScoreIndicator(
+                        'Overall', overallScore.toDouble(), Colors.blue),
+                    _buildScoreIndicator(
+                        'Confidence', confidenceScore.toDouble(), Colors.green),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Personalized Feedback Section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Personalized Feedback',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(feedback),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Filler Words Section
+                if (fillerWords.isNotEmpty) ...[
+                  const Text(
+                    'Filler Words',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: fillerWords.map((filler) {
+                      return Chip(
+                        backgroundColor: Colors.red.withOpacity(0.1),
+                        label: Text('${filler['word']} (${filler['count']})'),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Repeated Words Section
+                if (repeatedWords.isNotEmpty) ...[
+                  const Text(
+                    'Repeated Words',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: repeatedWords.map((repeated) {
+                      return Chip(
+                        backgroundColor: Colors.amber.withOpacity(0.1),
+                        label:
+                            Text('${repeated['word']} (${repeated['count']})'),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Speech Statistics
+                if (speechStats.isNotEmpty) ...[
+                  const Text(
+                    'Speech Statistics',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStatRow(
+                      'Word Count', '${speechStats['wordCount'] ?? 0}'),
+                  _buildStatRow(
+                      'Sentence Count', '${speechStats['sentenceCount'] ?? 0}'),
+                  _buildStatRow('Avg. Words per Sentence',
+                      '${(speechStats['avgWordsPerSentence'] ?? 0).toStringAsFixed(1)}'),
+                  _buildStatRow('Filler Word %',
+                      '${(speechStats['fillerWordPercentage'] ?? 0).toStringAsFixed(1)}%'),
+                  const SizedBox(height: 16),
+                ],
+
+                // Transcript Section
+                const Text(
+                  'Transcript',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildHighlightedTranscript(transcript, fillerWords),
+                const SizedBox(height: 20),
+
+                // Detailed Analysis Section
+                const Text(
+                  'Detailed Analysis',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...detailedAnalysis
+                    .map((item) => _buildAnalysisItem(item))
+                    .toList(),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildScoreIndicator(String label, double score, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              height: 100,
+              width: 100,
+              child: CircularProgressIndicator(
+                value: score / 100,
+                strokeWidth: 10,
+                backgroundColor: Colors.grey.withOpacity(0.2),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            ),
+            Text(
+              '${score.toInt()}',
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHighlightedTranscript(
+      String transcript, List<dynamic> fillerWords) {
+    // If no filler words, just return the plain transcript
+    if (fillerWords.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(transcript),
+      );
+    }
+
+    // Extract just the words from the filler words list
+    final fillerWordsList =
+        fillerWords.map((fw) => fw['word'].toString().toLowerCase()).toList();
+
+    // Split the transcript into words while preserving spacing and punctuation
+    final pattern = RegExp(r'(\s+|[.,!?;:()-])|(\b\w+\b)');
+    final matches = pattern.allMatches(transcript);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: Colors.black, fontSize: 14),
+          children: matches.map((match) {
+            final word = match.group(0) ?? '';
+            final isFillerWord = fillerWordsList.contains(word.toLowerCase());
+
+            return TextSpan(
+              text: word,
+              style: isFillerWord
+                  ? const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      backgroundColor: Color(0x33FF0000),
+                    )
+                  : null,
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalysisItem(Map<String, dynamic> item) {
+    final category = item['category'] ?? 'Unknown';
+    final score = (item['score'] as num?)?.toDouble() ?? 0.0;
+    final feedback = item['feedback'] ?? 'No feedback available';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                category,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              Text(
+                '${score.toInt()}/100',
+                style: TextStyle(
+                  color: _getScoreColor(score),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 100,
+              color: _getScoreColor(score),
+              backgroundColor: Colors.grey.withOpacity(0.2),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            feedback,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getScoreColor(double score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.amber;
+    if (score >= 40) return Colors.orange;
+    return Colors.red;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

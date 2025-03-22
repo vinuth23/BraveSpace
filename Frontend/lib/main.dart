@@ -17,6 +17,7 @@ import 'test_speech_page.dart';
 import 'speech_analysis_page.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'dart:io' show Platform;
+import 'therapist_dashboard.dart';
 
 export 'main.dart' show MainNavigatorState;
 
@@ -174,8 +175,35 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           if (snapshot.hasData) {
-            // User is logged in, navigate to main app
-            return const MainNavigator();
+            // User is logged in, check their role
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(snapshot.data!.uid)
+                  .get(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (userSnapshot.hasData && userSnapshot.data != null) {
+                  final userData =
+                      userSnapshot.data!.data() as Map<String, dynamic>?;
+                  final userRole = userData?['role'] as String? ?? 'child';
+
+                  // Navigate based on user role
+                  if (userRole == 'therapist' || userRole == 'parent') {
+                    return const TherapistDashboardPage();
+                  } else {
+                    // Default to child role
+                    return const MainNavigator();
+                  }
+                } else {
+                  // If we can't get user data, default to main navigator
+                  return const MainNavigator();
+                }
+              },
+            );
           } else {
             // User is not logged in, navigate to login page
             return const LoginPage();
