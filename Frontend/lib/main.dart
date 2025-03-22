@@ -15,24 +15,104 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'test_speech_page.dart';
 import 'speech_analysis_page.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'dart:io' show Platform;
 
 export 'main.dart' show MainNavigatorState;
 
 // Function to launch Unity application
 Future<void> launchUnity() async {
-  final Uri url = Uri.parse("unityapp://open");
-  try {
-    final bool launched = await launchUrl(
-      url,
-      mode: LaunchMode.externalApplication,
-    );
-    if (!launched) {
-      throw Exception('Could not launch Unity app');
+  // On Android, we have multiple approaches to try
+  if (Platform.isAndroid) {
+    // First try using android_intent_plus for direct launch
+    try {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.MAIN',
+        package: 'com.BraveSpace.VR',
+        componentName: 'com.unity3d.player.UnityPlayerActivity',
+      );
+      await intent.launch();
+      return; // Successfully launched
+    } catch (e) {
+      print('Error launching Unity with AndroidIntent: $e');
+      // Fall through to try other methods
     }
-  } catch (e) {
-    print('Error launching Unity: $e');
-    throw Exception('Could not launch Unity app: $e');
+
+    // Try with full activity path
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse(
+            "android-app://com.BraveSpace.VR/com.unity3d.player.UnityPlayerActivity"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity by activity: $e');
+      // Fall through to try other methods
+    }
+
+    // Try with package name directly
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("android-app://com.BraveSpace.VR"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity by package name: $e');
+      // Fall through to try other methods
+    }
+
+    // Try with standard deep link
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("unityapp://open"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity with deep link: $e');
+      // Fall through to try other methods
+    }
+
+    // Try with alternative deep link scheme
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("bravespace://vr/launch"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity with alternative deep link: $e');
+      // Fall through to try other methods
+    }
+  } else {
+    // For iOS or other platforms, just try the deep link
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("unityapp://open"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw Exception('Failed to launch Unity app');
+      }
+    } catch (e) {
+      print('Error launching Unity: $e');
+      rethrow;
+    }
   }
+
+  // If all else fails, throw an exception
+  throw Exception(
+      'Could not launch Unity app. Make sure it is installed and correctly configured.');
 }
 
 void main() async {

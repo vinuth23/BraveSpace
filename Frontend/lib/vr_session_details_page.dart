@@ -21,8 +21,24 @@ class VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
       // Show error message if Unity app couldn't be launched
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to launch Unity: $e'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Failed to launch Unity: $e'),
+              const Text(
+                'Make sure the Unity app is installed and correctly configured.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
         ),
       );
     }
