@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'home_page.dart';
 import 'notifications_page.dart';
 import 'vr_sessions_page.dart';
@@ -17,16 +18,57 @@ import 'speech_analysis_page.dart';
 
 export 'main.dart' show MainNavigatorState;
 
+// Function to launch Unity application
+Future<void> launchUnity() async {
+  final Uri url = Uri.parse("unityapp://open");
+  try {
+    final bool launched = await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched) {
+      throw Exception('Could not launch Unity app');
+    }
+  } catch (e) {
+    print('Error launching Unity: $e');
+    throw Exception('Could not launch Unity app: $e');
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Initialize Firebase before running the app.
+
+  // Initialize the app
   runApp(const MyApp());
 }
 
 // commit check
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Handle app lifecycle changes if needed
+  }
 
   @override
   Widget build(BuildContext context) {
