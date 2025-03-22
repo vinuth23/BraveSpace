@@ -33,8 +33,9 @@ def flutterProjectRoot = rootProject.projectDir.parentFile.toPath()
 
 // Include projects
 include ":app"
-include ':unityLibrary'
-project(':unityLibrary').projectDir = new File(
-    flutterProjectRoot.toFile(),
-    'android/app/libs/unity-library'
-)
+// Temporarily comment out the unityLibrary because it's causing issues
+// include ':unityLibrary'
+// project(':unityLibrary').projectDir = new File(
+//    flutterProjectRoot.toFile(),
+//    'android/app/libs/unity-library'
+// )

@@ -1,168 +1,174 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:convert';
-import 'services/vr_service.dart';
+import 'package:flutter/material.dart';
 import 'unity_wrapper.dart';
 
 class UnityVRPlayerScreen extends StatefulWidget {
-  const UnityVRPlayerScreen({Key? key}) : super(key: key);
+  final String sessionId;
+  final VoidCallback onClose;
+
+  const UnityVRPlayerScreen({
+    Key? key,
+    required this.sessionId,
+    required this.onClose,
+  }) : super(key: key);
 
   @override
-  _UnityVRPlayerScreenState createState() => _UnityVRPlayerScreenState();
+  State<UnityVRPlayerScreen> createState() => _UnityVRPlayerScreenState();
 }
 
 class _UnityVRPlayerScreenState extends State<UnityVRPlayerScreen> {
-  UnityWidgetController? _unityWidgetController;
-  bool _isPlaying = false;
-  bool _isLoading = true;
-  bool _isProcessing = false;
-  final VRService _vrService = VRService();
+  StreamSubscription<Map<String, dynamic>>? _unityMessageSubscription;
+  bool _isUnityReady = false;
+  String _statusMessage = "Initializing Unity...";
 
   @override
-  void dispose() {
-    _unityWidgetController?.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _initializeUnity();
   }
 
-  void _onUnityCreated(UnityWidgetController controller) {
-    _unityWidgetController = controller;
+  Future<void> _initializeUnity() async {
+    // Check if Unity is available
+    final isAvailable = await UnityWrapper.isUnityAvailable();
 
-    // Set up message handler from Unity
-    controller.onUnityMessage.listen((message) {
-      print('Message from Unity: ${message.toString()}');
-      // Handle messages from Unity (like speech completion or scores)
-      if (message.toString().contains("transcript")) {
-        // Process speech transcript from Unity
-        _handleTranscriptFromUnity(message.toString());
+    if (!isAvailable) {
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Unity is not available on this device";
+        });
       }
-    });
-  }
-
-  Future<void> _handleTranscriptFromUnity(String message) async {
-    setState(() {
-      _isProcessing = true;
-    });
-
-    try {
-      // Parse the message and extract transcript
-      final Map<String, dynamic> data = jsonDecode(message);
-      final String transcript = data['transcript'] ?? '';
-
-      // Show transcript to user
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Processing speech: ${transcript.substring(0, transcript.length > 50 ? 50 : transcript.length)}...')),
-      );
-
-      // Analyze the speech using backend
-      final analysis = await _vrService.analyzeVRSpeech(transcript);
-
-      // Save VR session
-      await _vrService.saveVRSession(
-          transcript, analysis, data['duration'] ?? 0);
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Speech analyzed and saved successfully!')),
-      );
-    } catch (e) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error processing speech: $e')),
-      );
-    } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      return;
     }
+
+    // Initialize Unity
+    await UnityWrapper.initialize();
+
+    // Listen to messages from Unity
+    _unityMessageSubscription = UnityWrapper.onUnityMessage.listen((message) {
+      _handleUnityMessage(message);
+    });
+
+    // Let Unity know we're ready
+    _sendInitialDataToUnity();
   }
 
-  void _togglePlayState() {
-    setState(() {
-      _isPlaying = !_isPlaying;
+  void _sendInitialDataToUnity() {
+    // Send the session ID to Unity
+    final initialData = {
+      'sessionId': widget.sessionId,
+      'command': 'initialize'
+    };
 
-      // Send command to Unity
-      if (_isPlaying) {
-        _unityWidgetController?.postMessage(
-            'UnityFlutterBridge', 'HandleFlutterMessage', 'StartClassroom');
-      } else {
-        _unityWidgetController?.postMessage(
-            'UnityFlutterBridge', 'HandleFlutterMessage', 'StopClassroom');
-      }
+    UnityWrapper.sendMessageToUnity(
+        "GameManager", "ReceiveDataFromFlutter", jsonEncode(initialData));
+
+    setState(() {
+      _statusMessage = "Connecting to VR session...";
     });
+  }
+
+  void _handleUnityMessage(Map<String, dynamic> message) {
+    final type = message['type'];
+    final data = message['data'];
+
+    switch (type) {
+      case 'ready':
+        setState(() {
+          _isUnityReady = true;
+          _statusMessage = "";
+        });
+        break;
+      case 'status':
+        setState(() {
+          _statusMessage = data['message'] ?? "Unknown status";
+        });
+        break;
+      case 'error':
+        setState(() {
+          _statusMessage = "Error: ${data['message'] ?? 'Unknown error'}";
+        });
+        break;
+      default:
+        print("Unknown message type from Unity: $type");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('VR Classroom'),
-        backgroundColor: const Color(0xFF48CAE4),
-      ),
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Unity Widget
-          UnityWidget(
-            onUnityCreated: _onUnityCreated,
-            onUnitySceneLoaded: (SceneLoaded scene) {
-              print('Unity scene loaded: ${scene.name}');
-              setState(() {
-                _isLoading = false;
-              });
-            },
-            fullscreen: true,
-          ),
-
-          // Loading indicator
-          if (_isLoading || _isProcessing)
-            Container(
-              color: Colors.black.withOpacity(0.3),
-              child: Center(
+          // Unity view with fallback
+          Positioned.fill(
+            child: UnityWidget(
+              fullscreen: true,
+              backgroundColor: Colors.black,
+              fallback: Center(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const CircularProgressIndicator(
-                      color: Color(0xFF48CAE4),
+                    const Icon(
+                      Icons.videogame_asset,
+                      size: 64,
+                      color: Colors.white,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _isLoading
-                          ? 'Loading VR environment...'
-                          : 'Processing speech...',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      _statusMessage,
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ],
                 ),
               ),
             ),
+          ),
 
-          // Controls overlay
-          Positioned(
-            bottom: 20,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FloatingActionButton.extended(
-                    onPressed:
-                        (_isLoading || _isProcessing) ? null : _togglePlayState,
-                    label: Text(_isPlaying ? 'Stop' : 'Start'),
-                    icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow),
-                    backgroundColor: (_isLoading || _isProcessing)
-                        ? Colors.grey
-                        : const Color(0xFF48CAE4),
+          // Status overlay (only visible when Unity is not ready)
+          if (!_isUnityReady && _statusMessage.isNotEmpty)
+            Positioned(
+              bottom: 100,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
+                  child: Text(
+                    _statusMessage,
+                    style: const TextStyle(color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+
+          // Close button
+          Positioned(
+            top: 40,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                onPressed: () {
+                  widget.onClose();
+                },
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _unityMessageSubscription?.cancel();
+    super.dispose();
   }
 }

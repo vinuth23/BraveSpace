@@ -2,186 +2,177 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// A wrapper for Unity integration in Flutter
+/// A wrapper for Unity integration that falls back to a placeholder when Unity is not available
+class UnityWrapper {
+  static const MethodChannel _channel =
+      MethodChannel('com.unity3d.player/unity');
+  static final StreamController<Map<String, dynamic>> _streamController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  static bool _isUnityAvailable = false;
+  static bool _hasCheckedAvailability = false;
+
+  /// Streams messages from Unity
+  static Stream<Map<String, dynamic>> get onUnityMessage =>
+      _streamController.stream;
+
+  /// Checks if Unity is available
+  static Future<bool> isUnityAvailable() async {
+    if (!_hasCheckedAvailability) {
+      try {
+        _isUnityAvailable =
+            await _channel.invokeMethod('isUnityAvailable') ?? false;
+      } catch (e) {
+        _isUnityAvailable = false;
+        print('Unity not available: $e');
+      }
+      _hasCheckedAvailability = true;
+    }
+    return _isUnityAvailable;
+  }
+
+  /// Sends a message to Unity
+  static Future<void> sendMessageToUnity(
+      String gameObject, String methodName, String message) async {
+    if (!await isUnityAvailable()) {
+      print(
+          'Unity not available, message not sent: $gameObject.$methodName($message)');
+      return;
+    }
+
+    try {
+      await _channel.invokeMethod('sendMessage', {
+        'gameObject': gameObject,
+        'methodName': methodName,
+        'message': message,
+      });
+    } catch (e) {
+      print('Error sending message to Unity: $e');
+    }
+  }
+
+  /// Initializes Unity
+  static Future<void> initialize() async {
+    if (!_hasCheckedAvailability) {
+      await isUnityAvailable();
+    }
+
+    if (!_isUnityAvailable) {
+      print('Unity not available, skipping initialization');
+      return;
+    }
+
+    try {
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'onUnityMessage') {
+          final Map<String, dynamic> message =
+              Map<String, dynamic>.from(call.arguments);
+          _streamController.add(message);
+        }
+        return null;
+      });
+    } catch (e) {
+      print('Error initializing Unity: $e');
+    }
+  }
+}
+
+/// A widget that displays Unity content or a fallback widget when Unity is not available
 class UnityWidget extends StatefulWidget {
-  final Function(dynamic)? onUnityMessage;
-  final Function(SceneLoaded)? onUnitySceneLoaded;
-  final Function(UnityWidgetController)? onUnityCreated;
+  final Widget? fallback;
+  final Color backgroundColor;
   final bool fullscreen;
 
   const UnityWidget({
     Key? key,
-    this.onUnityMessage,
-    this.onUnitySceneLoaded,
-    this.onUnityCreated,
+    this.fallback,
+    this.backgroundColor = Colors.black,
     this.fullscreen = false,
   }) : super(key: key);
 
   @override
-  _UnityWidgetState createState() => _UnityWidgetState();
+  UnityWidgetState createState() => UnityWidgetState();
 }
 
-class _UnityWidgetState extends State<UnityWidget> {
-  static const MethodChannel _channel =
-      MethodChannel('com.bravespace.unity/communication');
-
-  final StreamController<dynamic> _onUnityMessageStreamController =
-      StreamController<dynamic>.broadcast();
-
-  Stream<dynamic> get onUnityMessage => _onUnityMessageStreamController.stream;
-  late UnityWidgetController _controller;
+class UnityWidgetState extends State<UnityWidget> {
+  bool _isUnityAvailable = false;
+  bool _isUnityInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _setupMethodChannel();
-    _createUnityPlayer();
-
-    // Create controller and pass to callback
-    _controller = UnityWidgetController(_channel, onUnityMessage);
-    if (widget.onUnityCreated != null) {
-      widget.onUnityCreated!(_controller);
-    }
+    _checkUnityAvailability();
   }
 
-  void _setupMethodChannel() {
-    _channel.setMethodCallHandler((call) async {
-      switch (call.method) {
-        case 'onUnityMessage':
-          final dynamic message = call.arguments;
-          _onUnityMessageStreamController.add(message);
-          if (widget.onUnityMessage != null) {
-            widget.onUnityMessage!(message);
-          }
-          break;
-        case 'onUnitySceneLoaded':
-          if (widget.onUnitySceneLoaded != null) {
-            final Map<String, dynamic> arguments =
-                Map<String, dynamic>.from(call.arguments);
-            final String name = arguments['name'] as String? ?? '';
-            final int buildIndex = arguments['buildIndex'] as int? ?? 0;
-            final bool isLoaded = arguments['isLoaded'] as bool? ?? false;
-            final bool isValid = arguments['isValid'] as bool? ?? false;
+  Future<void> _checkUnityAvailability() async {
+    final isAvailable = await UnityWrapper.isUnityAvailable();
 
-            widget.onUnitySceneLoaded!(
-              SceneLoaded(
-                name: name,
-                buildIndex: buildIndex,
-                isLoaded: isLoaded,
-                isValid: isValid,
-              ),
-            );
-          }
-          break;
+    if (mounted) {
+      setState(() {
+        _isUnityAvailable = isAvailable;
+      });
+    }
+
+    if (isAvailable && !_isUnityInitialized) {
+      await UnityWrapper.initialize();
+      if (mounted) {
+        setState(() {
+          _isUnityInitialized = true;
+        });
       }
-      return null;
-    });
-  }
-
-  Future<void> _createUnityPlayer() async {
-    try {
-      await _channel.invokeMethod('createUnityPlayer');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to create Unity player: ${e.message}');
-    }
-  }
-
-  void postMessage(
-    String gameObjectName,
-    String methodName,
-    String message,
-  ) {
-    try {
-      _channel.invokeMethod(
-        'sendMessageToUnity',
-        <String, dynamic>{
-          'gameObject': gameObjectName,
-          'methodName': methodName,
-          'message': message,
-        },
-      );
-    } on PlatformException catch (e) {
-      debugPrint('Failed to send message to Unity: ${e.message}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Use AndroidView to display the Unity view
+    if (!_isUnityAvailable) {
+      return widget.fallback ?? _buildDefaultFallback();
+    }
+
+    try {
+      if (widget.fullscreen) {
+        return Container(
+          color: widget.backgroundColor,
+          child: const AndroidView(
+            viewType: 'com.unity3d.player/unityView',
+            creationParamsCodec: StandardMessageCodec(),
+          ),
+        );
+      } else {
+        return Container(
+          color: widget.backgroundColor,
+          child: const AndroidView(
+            viewType: 'com.unity3d.player/unityView',
+            creationParamsCodec: StandardMessageCodec(),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error building Unity widget: $e');
+      return widget.fallback ?? _buildDefaultFallback();
+    }
+  }
+
+  Widget _buildDefaultFallback() {
     return Container(
       color: Colors.black,
       child: const Center(
-        child: Text('Unity View Placeholder',
-            style: TextStyle(color: Colors.white, fontSize: 24)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.videogame_asset_off,
+              size: 64,
+              color: Colors.white,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Unity content not available',
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _onUnityMessageStreamController.close();
-    super.dispose();
-  }
-}
-
-/// Model class for Unity scene loaded event
-class SceneLoaded {
-  final String name;
-  final int buildIndex;
-  final bool isLoaded;
-  final bool isValid;
-
-  SceneLoaded({
-    required this.name,
-    required this.buildIndex,
-    required this.isLoaded,
-    required this.isValid,
-  });
-}
-
-/// UnityWidgetController to control the Unity widget
-class UnityWidgetController {
-  final MethodChannel _channel;
-  final Stream<dynamic> onUnityMessage;
-
-  UnityWidgetController(this._channel, this.onUnityMessage);
-
-  void postMessage(
-    String gameObjectName,
-    String methodName,
-    String message,
-  ) {
-    try {
-      _channel.invokeMethod(
-        'sendMessageToUnity',
-        <String, dynamic>{
-          'gameObject': gameObjectName,
-          'methodName': methodName,
-          'message': message,
-        },
-      );
-    } on PlatformException catch (e) {
-      debugPrint('Failed to send message to Unity: ${e.message}');
-    }
-  }
-
-  Future<void> pause() async {
-    try {
-      await _channel.invokeMethod('pauseUnity');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to pause Unity: ${e.message}');
-    }
-  }
-
-  Future<void> resume() async {
-    try {
-      await _channel.invokeMethod('resumeUnity');
-    } on PlatformException catch (e) {
-      debugPrint('Failed to resume Unity: ${e.message}');
-    }
-  }
-
-  void dispose() {
-    // No need to dispose anything here as the channel is managed by the plugin
   }
 }

@@ -3,10 +3,23 @@ apply plugin: 'com.android.library'
 // Define unityStreamingAssets
 def unityStreamingAssets = ''
 
+// Get Flutter SDK path from local.properties
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+localPropertiesFile.withReader('UTF-8') { reader ->
+    localProperties.load(reader)
+}
+def flutterSdkPath = localProperties.getProperty('flutter.sdk')
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation(name: 'TextToSpeechConverter', ext:'aar')
     implementation 'androidx.games:games-frame-pacing:1.10.0'
+    
+    // Add Android dependencies
+    implementation "androidx.core:core:1.6.0"
+    implementation "androidx.annotation:annotation:1.3.0"
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.4.0"
+    implementation "androidx.lifecycle:lifecycle-runtime:2.4.0"
 }
 
 android {

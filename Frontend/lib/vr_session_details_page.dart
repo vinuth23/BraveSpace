@@ -18,7 +18,10 @@ class VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const UnityVRPlayerScreen(),
+        builder: (context) => UnityVRPlayerScreen(
+          sessionId: "session-123", // Replace with actual session ID
+          onClose: () => Navigator.pop(context),
+        ),
       ),
     );
   }
