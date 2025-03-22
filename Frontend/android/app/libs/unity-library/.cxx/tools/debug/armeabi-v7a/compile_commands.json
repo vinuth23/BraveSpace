@@ -1,0 +1,7 @@
+[
+{
+  "directory": "C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/libs/unity-library/.cxx/Debug/6la1i5i1/armeabi-v7a",
+  "command": "C:\\Users\\vinut\\AppData\\Local\\Android\\Sdk\\ndk\\25.1.8937393\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=armv7-none-linux-androideabi23 --sysroot=C:/Users/vinut/AppData/Local/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DEXTERNAL_FRAME_PACING_CODE -Dswappywrapper_EXPORTS -IC:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/libs/unity-library/src/main/cpp/FramePacing -isystem C:/Users/vinut/.gradle/caches/transforms-3/0bcf12400b74fcabf35e0e82eda83f50/transformed/jetified-games-frame-pacing-1.10.0/prefab/modules/swappy_static/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security   -Wall -Wextra -pedantic -Werror -fno-limit-debug-info  -fPIC -o FramePacing\\CMakeFiles\\swappywrapper.dir\\UnitySwappyWrapper.cpp.o -c C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\Frontend\\android\\app\\libs\\unity-library\\src\\main\\cpp\\FramePacing\\UnitySwappyWrapper.cpp",
+  "file": "C:\\Users\\vinut\\Desktop\\Bravespace\\BraveSpace\\Frontend\\android\\app\\libs\\unity-library\\src\\main\\cpp\\FramePacing\\UnitySwappyWrapper.cpp"
+}
+]

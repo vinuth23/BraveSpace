@@ -1,0 +1,5 @@
+C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/libs/unity-library/.cxx/Debug/6la1i5i1/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/libs/unity-library/.cxx/Debug/6la1i5i1/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/libs/unity-library/.cxx/Debug/6la1i5i1/armeabi-v7a/FramePacing/CMakeFiles/swappywrapper.dir
+C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/libs/unity-library/.cxx/Debug/6la1i5i1/armeabi-v7a/FramePacing/CMakeFiles/edit_cache.dir
+C:/Users/vinut/Desktop/Bravespace/BraveSpace/Frontend/android/app/libs/unity-library/.cxx/Debug/6la1i5i1/armeabi-v7a/FramePacing/CMakeFiles/rebuild_cache.dir
