@@ -6,6 +6,7 @@ import 'goals_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'therapist_dashboard.dart';
+import 'leaderboard_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -312,7 +313,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AvatarCustomizationPage(),
+                            builder: (context) =>
+                                const AvatarCustomizationPage(),
                           ),
                         );
                       },
@@ -320,7 +322,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     _buildMenuItem(
                       icon: Icons.leaderboard_outlined,
                       title: 'Leaderboard',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LeaderboardPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildMenuItem(
                       icon: Icons.emoji_events_outlined,
