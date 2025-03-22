@@ -72,10 +72,6 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
 
   // Mapping for skin tones and their corresponding avatar images
 
-
-
-
-
   // Mapping for head images with corresponding skin tone versions
   final Map<int, Map<Color, String>> headImagesBySkinTone = {
     0: {
@@ -186,23 +182,22 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-
+                  // Avatar image based on selected skin tone
+                  
                  
-                
-                 
-                
-                 
-                 
+                  
+                  
+                  
 
                   // Head preview based on selected skin tone and head index
                   Image.asset(
                     headImagesBySkinTone[selectedHeadIndex]?[selectedSkinTone] ??
-                        'assets/images/head_default.png',
+                        'assets/images/head_default.png', // Fallback image
                     width: 120,
                     height: 120,
                   ),
 
-                  // Face expression (adjusted position using Positioned)
+                  // Face expression
                   Positioned(
                     top: 40, // Adjust this value to move the face expression down
                     child: Image.asset(
