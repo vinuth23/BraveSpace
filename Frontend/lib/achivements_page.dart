@@ -211,31 +211,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildNavItem(Icons.home_outlined, 0),
-            _buildNavItem(Icons.notifications_outlined, 1),
-            _buildCenterVRButton(),
-            _buildNavItem(Icons.schedule_outlined, 3),
-            _buildNavItem(Icons.person_outline, 4),
-          ],
-        ),
-      ),
     );
   }
 
@@ -300,46 +275,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  // Helper methods for bottom navigation bar
-  Widget _buildNavItem(IconData icon, int index) {
-    return IconButton(
-      icon: Icon(
-        icon,
-        color: Colors.grey,
-        size: 24,
-      ),
-      onPressed: () {
-        // Pop back to the main navigator
-        Navigator.pop(context);
-      },
-    );
-  }
-
-  Widget _buildCenterVRButton() {
-    return GestureDetector(
-      onTap: () {
-        // Pop back to the main navigator
-        Navigator.pop(context);
-      },
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          shape: BoxShape.circle,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Image.asset(
-            'assets/icons/vr_headset_icon.png',
-            width: 20,
-            height: 20,
-          ),
         ),
       ),
     );
