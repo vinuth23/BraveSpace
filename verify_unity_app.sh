@@ -24,51 +24,40 @@ adb devices | grep -v "List"
 echo ""
 
 # Check if the Unity app is installed
-echo "Checking for BraveSpace VR app..."
-PACKAGE_EXISTS=$(adb shell pm list packages | grep -i "BraveSpace")
+echo "Checking for Unity Classroom app..."
+PACKAGE_EXISTS=$(adb shell pm list packages | grep -i "DefaultCompany.classroomtest")
 
 if [ -z "$PACKAGE_EXISTS" ]; then
-    echo "❌ BraveSpace VR app NOT found on the device"
+    echo "❌ Unity Classroom app NOT found on the device"
     echo "   Please make sure you've built and installed the Unity app correctly"
 else
-    echo "✅ BraveSpace VR app found: $PACKAGE_EXISTS"
+    echo "✅ Unity Classroom app found: $PACKAGE_EXISTS"
 fi
 
 # Find the exact package name
 echo ""
-echo "Searching for all packages containing 'brave'..."
-BRAVE_PACKAGES=$(adb shell pm list packages | grep -i "brave")
-echo "$BRAVE_PACKAGES"
+echo "Searching for all packages containing 'DefaultCompany'..."
+DEFAULT_PACKAGES=$(adb shell pm list packages | grep -i "DefaultCompany")
+echo "$DEFAULT_PACKAGES"
 
 echo ""
 echo "==== Testing Deep Links ===="
-echo "1. Testing original deep link (unityapp://open)"
+echo "1. Testing direct package launch"
+adb shell am start -n com.DefaultCompany.classroomtest/com.unity3d.player.UnityPlayerActivity
+echo ""
+
+echo "2. Testing original deep link (unityapp://open)"
 adb shell am start -a android.intent.action.VIEW -d "unityapp://open"
 echo ""
 
-echo "2. Testing alternative deep link (bravespace://vr/launch)"
+echo "3. Testing alternative deep link (bravespace://vr/launch)"
 adb shell am start -a android.intent.action.VIEW -d "bravespace://vr/launch"
 echo ""
 
-echo "3. Testing direct package launch"
-# Extract first package from list
-if [ ! -z "$BRAVE_PACKAGES" ]; then
-    FIRST_PACKAGE=$(echo "$BRAVE_PACKAGES" | head -n 1 | sed 's/package://g')
-    echo "Attempting to launch: $FIRST_PACKAGE"
-    adb shell monkey -p $FIRST_PACKAGE -c android.intent.category.LAUNCHER 1
-else
-    echo "❌ Cannot test direct package launch - no package found"
-fi
-
 echo ""
 echo "==== Unity App Manifest Information ===="
-if [ ! -z "$BRAVE_PACKAGES" ]; then
-    FIRST_PACKAGE=$(echo "$BRAVE_PACKAGES" | head -n 1 | sed 's/package://g')
-    echo "Getting manifest information for: $FIRST_PACKAGE"
-    adb shell dumpsys package $FIRST_PACKAGE | grep -A 10 "intent filter"
-else
-    echo "❌ Cannot get manifest information - no package found"
-fi
+echo "Getting manifest information for package: com.DefaultCompany.classroomtest"
+adb shell dumpsys package com.DefaultCompany.classroomtest | grep -A 10 "intent filter"
 
 echo ""
 echo "Tests completed. Check the output above for any errors or issues."

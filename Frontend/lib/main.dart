@@ -28,7 +28,7 @@ Future<void> launchUnity() async {
     try {
       final intent = AndroidIntent(
         action: 'android.intent.action.MAIN',
-        package: 'com.BraveSpace.VR',
+        package: 'com.DefaultCompany.classroomtest',
         componentName: 'com.unity3d.player.UnityPlayerActivity',
       );
       await intent.launch();
@@ -42,7 +42,7 @@ Future<void> launchUnity() async {
     try {
       final bool launched = await launchUrl(
         Uri.parse(
-            "android-app://com.BraveSpace.VR/com.unity3d.player.UnityPlayerActivity"),
+            "android-app://com.DefaultCompany.classroomtest/com.unity3d.player.UnityPlayerActivity"),
         mode: LaunchMode.externalApplication,
       );
       if (launched) {
@@ -56,7 +56,7 @@ Future<void> launchUnity() async {
     // Try with package name directly
     try {
       final bool launched = await launchUrl(
-        Uri.parse("android-app://com.BraveSpace.VR"),
+        Uri.parse("android-app://com.DefaultCompany.classroomtest"),
         mode: LaunchMode.externalApplication,
       );
       if (launched) {

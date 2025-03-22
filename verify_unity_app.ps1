@@ -29,56 +29,41 @@ Write-Host "Device(s) found:" -ForegroundColor Green
 Write-Host ""
 
 # Check if the Unity app is installed
-Write-Host "Checking for BraveSpace VR app..." -ForegroundColor Cyan
-$packageExists = & adb shell "pm list packages | grep -i 'BraveSpace'"
+Write-Host "Checking for Unity Classroom app..." -ForegroundColor Cyan
+$packageExists = & adb shell "pm list packages | grep -i 'DefaultCompany.classroomtest'"
 
 if (-not $packageExists) {
-    Write-Host "❌ BraveSpace VR app NOT found on the device" -ForegroundColor Red
+    Write-Host "❌ Unity Classroom app NOT found on the device" -ForegroundColor Red
     Write-Host "   Please make sure you've built and installed the Unity app correctly" -ForegroundColor Yellow
 }
 else {
-    Write-Host "✅ BraveSpace VR app found: $packageExists" -ForegroundColor Green
+    Write-Host "✅ Unity Classroom app found: $packageExists" -ForegroundColor Green
 }
 
 # Find the exact package name
 Write-Host ""
-Write-Host "Searching for all packages containing 'brave'..." -ForegroundColor Cyan
-$bravePackages = & adb shell "pm list packages | grep -i 'brave'"
-Write-Host $bravePackages
+Write-Host "Searching for all packages containing 'DefaultCompany'..." -ForegroundColor Cyan
+$defaultPackages = & adb shell "pm list packages | grep -i 'DefaultCompany'"
+Write-Host $defaultPackages
 
 Write-Host ""
-Write-Host "==== Testing Deep Links ====" -ForegroundColor Cyan
-Write-Host "1. Testing original deep link (unityapp://open)" -ForegroundColor Cyan
+Write-Host "==== Testing Deep Links ===="
+Write-Host "1. Testing direct package launch" -ForegroundColor Cyan
+& adb shell "am start -n com.DefaultCompany.classroomtest/com.unity3d.player.UnityPlayerActivity"
+Write-Host ""
+
+Write-Host "2. Testing original deep link (unityapp://open)" -ForegroundColor Cyan
 & adb shell "am start -a android.intent.action.VIEW -d 'unityapp://open'"
 Write-Host ""
 
-Write-Host "2. Testing alternative deep link (bravespace://vr/launch)" -ForegroundColor Cyan
+Write-Host "3. Testing alternative deep link (bravespace://vr/launch)" -ForegroundColor Cyan
 & adb shell "am start -a android.intent.action.VIEW -d 'bravespace://vr/launch'"
 Write-Host ""
 
-Write-Host "3. Testing direct package launch" -ForegroundColor Cyan
-# Extract first package from list
-if ($bravePackages) {
-    $firstPackage = $bravePackages -split "`n" | Select-Object -First 1
-    $firstPackage = $firstPackage -replace "package:", ""
-    Write-Host "Attempting to launch: $firstPackage" -ForegroundColor Cyan
-    & adb shell "monkey -p $firstPackage -c android.intent.category.LAUNCHER 1"
-}
-else {
-    Write-Host "❌ Cannot test direct package launch - no package found" -ForegroundColor Red
-}
-
 Write-Host ""
 Write-Host "==== Unity App Manifest Information ====" -ForegroundColor Cyan
-if ($bravePackages) {
-    $firstPackage = $bravePackages -split "`n" | Select-Object -First 1
-    $firstPackage = $firstPackage -replace "package:", ""
-    Write-Host "Getting manifest information for: $firstPackage" -ForegroundColor Cyan
-    & adb shell "dumpsys package $firstPackage | grep -A 10 'intent filter'"
-}
-else {
-    Write-Host "❌ Cannot get manifest information - no package found" -ForegroundColor Red
-}
+Write-Host "Getting manifest information for package: com.DefaultCompany.classroomtest" -ForegroundColor Cyan
+& adb shell "dumpsys package com.DefaultCompany.classroomtest | grep -A 10 'intent filter'"
 
 Write-Host ""
 Write-Host "Tests completed. Check the output above for any errors or issues." -ForegroundColor Green
