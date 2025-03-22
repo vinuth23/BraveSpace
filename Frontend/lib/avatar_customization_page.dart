@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/main.dart';
+import 'notifications_page.dart';
 
 class AvatarCustomizationPage extends StatelessWidget {
   const AvatarCustomizationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'SF Pro Display',
-      ),
-      home: const AvatarCreatorScreen(),
-    );
+    return const AvatarCreatorScreen();
   }
 }
 
@@ -27,17 +21,18 @@ class AvatarCreatorScreen extends StatefulWidget {
 class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
   // Selected category
   String selectedCategory = 'Basic';
-  
+
   // Avatar properties
-  Color selectedSkinTone = const Color(0xFFEAC393); // Default to Medium skin tone
+  Color selectedSkinTone =
+      const Color(0xFFEAC393); // Default to Medium skin tone
   int selectedFaceIndex = 0;
   int selectedHeadIndex = 0; // Default to Head 1
-  
+
   // Original values for reset functionality
   late Color originalSkinTone;
   late int originalFaceIndex;
   late int originalHeadIndex;
-  
+
   // List of categories
   final List<Map<String, dynamic>> categories = [
     {'name': 'Basic', 'icon': Icons.person},
@@ -53,7 +48,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     const Color(0xFFBF8A63), // Dark
     const Color(0xFF7D5339), // Darkest
   ];
-  
+
   // Face expressions
   final List<String> faceExpressions = [
     'assets/images/normal.png', // Normal
@@ -69,8 +64,6 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     'assets/images/head3.png',
     'assets/images/head4.png',
   ];
-
-  // Mapping for skin tones and their corresponding avatar images
 
   // Mapping for head images with corresponding skin tone versions
   final Map<int, Map<Color, String>> headImagesBySkinTone = {
@@ -125,7 +118,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     originalSkinTone = selectedSkinTone;
     originalFaceIndex = selectedFaceIndex;
     originalHeadIndex = selectedHeadIndex;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Avatar saved successfully!')),
     );
@@ -134,15 +127,17 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF0F0F0),
       body: Column(
         children: [
           // Status bar area
           Container(
             color: const Color(0xFF5ECCE9),
-            padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 8),
+            padding:
+                const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 8),
           ),
 
-          // App header with menu and back button
+          // App header with back button and notification button
           Container(
             color: const Color(0xFF5ECCE9),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -150,8 +145,8 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () {},
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
                 ),
                 const Text(
                   'Create Your Avatar',
@@ -161,8 +156,15 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios),
-                  onPressed: () {},
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsPage(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -182,16 +184,10 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Avatar image based on selected skin tone
-                  
-                 
-                  
-                  
-                  
-
                   // Head preview based on selected skin tone and head index
                   Image.asset(
-                    headImagesBySkinTone[selectedHeadIndex]?[selectedSkinTone] ??
+                    headImagesBySkinTone[selectedHeadIndex]
+                            ?[selectedSkinTone] ??
                         'assets/images/head_default.png', // Fallback image
                     width: 120,
                     height: 120,
@@ -199,7 +195,8 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
 
                   // Face expression
                   Positioned(
-                    top: 40, // Adjust this value to move the face expression down
+                    top:
+                        40, // Adjust this value to move the face expression down
                     child: Image.asset(
                       faceExpressions[selectedFaceIndex],
                       width: 60,
@@ -237,7 +234,8 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                         category['name'],
                         style: TextStyle(
                           color: isSelected ? Colors.black : Colors.grey,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -253,7 +251,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               }).toList(),
             ),
           ),
-          
+
           // Customization options based on selected category
           Expanded(
             child: SingleChildScrollView(
@@ -295,7 +293,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                         );
                       }).toList(),
                     ),
-                    
+
                     const SizedBox(height: 24),
 
                     // Face expressions section
@@ -341,7 +339,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                       ),
                     ),
                   ],
-                  
+
                   if (selectedCategory == 'Hair') ...[
                     const Center(
                       child: Text(
@@ -350,7 +348,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                       ),
                     ),
                   ],
-                  
+
                   if (selectedCategory == 'Outfit') ...[
                     const Center(
                       child: Text(
@@ -359,7 +357,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                       ),
                     ),
                   ],
-                  
+
                   if (selectedCategory == 'Extras') ...[
                     const Center(
                       child: Text(
@@ -368,16 +366,17 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                       ),
                     ),
                   ],
-                  
+
                   const SizedBox(height: 1),
 
-                  // Add the TextButton here
+                  // Add the TextButton here for navigation
                   TextButton(
                     onPressed: () {
                       final mainNavigator =
                           context.findAncestorStateOfType<MainNavigatorState>();
                       if (mainNavigator != null) {
                         mainNavigator.onItemTapped(2);
+                        Navigator.pop(context);
                       }
                     },
                     child: const Row(
@@ -389,9 +388,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                     ),
                   ),
 
-                  // Horizontal scrolling for head previews
-
-                  // Face expressions section
+                  // Head section
                   const Text(
                     'Head',
                     style: TextStyle(
@@ -399,7 +396,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
+                  const SizedBox(height: 16),
                   SizedBox(
                     height: 100,
                     child: ListView.builder(
@@ -431,6 +428,7 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
                       },
                     ),
                   ),
+                  const SizedBox(height: 20),
 
                   // Action buttons
                   Row(
@@ -478,51 +476,84 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
               ),
             ),
           ),
-
-          // Bottom navigation bar
-          Container(
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 1,
-                  blurRadius: 5,
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                const Icon(Icons.home_outlined),
-                const Icon(Icons.notifications_outlined),
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.black,
-                    size: 28,
-                  ),
-                ),
-                const Icon(Icons.access_time),
-                const Icon(Icons.person_outline),
-              ],
-            ),
-          ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildNavItem(Icons.home_outlined, 0),
+            _buildNavItem(Icons.notifications_outlined, 1),
+            _buildCenterVRButton(),
+            _buildNavItem(Icons.schedule_outlined, 3),
+            _buildNavItem(Icons.person_outline, 4),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper methods for bottom navigation bar
+  Widget _buildNavItem(IconData icon, int index) {
+    return IconButton(
+      icon: Icon(
+        icon,
+        color: Colors.grey,
+        size: 24,
+      ),
+      onPressed: () {
+        Navigator.pop(context);
+        Future.delayed(const Duration(milliseconds: 100), () {
+          final mainNavigator =
+              context.findAncestorStateOfType<MainNavigatorState>();
+          if (mainNavigator != null) {
+            mainNavigator.onItemTapped(index);
+          }
+        });
+      },
+    );
+  }
+
+  Widget _buildCenterVRButton() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        Future.delayed(const Duration(milliseconds: 100), () {
+          final mainNavigator =
+              context.findAncestorStateOfType<MainNavigatorState>();
+          if (mainNavigator != null) {
+            mainNavigator.onItemTapped(2);
+          }
+        });
+      },
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          shape: BoxShape.circle,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset(
+            'assets/icons/vr_headset_icon.png',
+            width: 20,
+            height: 20,
+          ),
+        ),
       ),
     );
   }
