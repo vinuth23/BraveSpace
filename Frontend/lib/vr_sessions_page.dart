@@ -100,63 +100,6 @@ class VRSessionsPage extends StatelessWidget {
                           subtitle: '28 Days . 6-7 days per week',
                           onTap: () {},
                         ),
-                        const SizedBox(height: 24),
-                        OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.cyan,
-                            side: BorderSide(color: Colors.cyan.shade300),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                          child: const Text('Customize VR Activities'),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            try {
-                              await launchUnity();
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Failed to launch Unity: $e'),
-                                      const Text(
-                                        'Make sure the Unity app is installed and correctly configured.',
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
-                                  backgroundColor: Colors.red,
-                                  duration: const Duration(seconds: 5),
-                                  action: SnackBarAction(
-                                    label: 'OK',
-                                    textColor: Colors.white,
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF48CAE4),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                          icon: const Icon(Icons.videogame_asset),
-                          label: const Text('Launch Unity VR Experience'),
-                        ),
                       ],
                     ),
                   ),
