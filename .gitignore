@@ -38,3 +38,47 @@ Frontend/pubspec.lock
 
 # Ignore Windows system files
 Thumbs.db
+
+# Ignore APK folder
+/apk/
+
+# Additional Flutter build files
+**/build/
+**/.dart_tool/
+**/*.lock
+**/*.iml
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/generated_plugin_registrant.*
+**/.cxx/
+**/.cxx/**/
+**/*.fingerprint.bin
+**/index-*.json
+**/.android/
+**/.ios/
+**/.melos/
+
+# Additional Unity files to ignore
+**/.utmp/
+**/.vs/
+**/.vsconfig
+**/UpgradeLog.htm
+**/*.sln
+**/Built/
+**/Logs/
+**/Library/
+**/Temp/
+**/obj/
+**/ProjectSettings/
+**/*.meta
+**/Assets/Class4/
+**/Assets/Class4.meta
+**/Assets/Settings/
+**/Assets/Settings.meta
+**/Assets/TutorialInfo/
+**/Assets/TutorialInfo.meta
+**/Assets/Scripts/SpeechRecorder.cs
+**/Assets/Scripts/SpeechRecorderUI.cs
+**/Assets/InputSystem_Actions.inputactions
+**/Assets/Readme.asset
