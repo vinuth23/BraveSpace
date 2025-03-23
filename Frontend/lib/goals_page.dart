@@ -13,3 +13,25 @@ class BraveSpaceGoalsPage extends StatelessWidget {
     );
   }
 }
+class Goal {
+  String title;
+  String description;
+  int progress;
+  int total;
+  IconData icon;
+  Color iconColor;
+
+  Goal({
+    required this.title,
+    required this.description,
+    required this.progress,
+    required this.total,
+    required this.icon,
+    required this.iconColor,
+  });
+}
+
+class GoalsPage extends StatefulWidget {
+  @override
+  _GoalsPageState createState() => _GoalsPageState();
+}
