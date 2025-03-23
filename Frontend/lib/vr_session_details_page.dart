@@ -1,8 +1,48 @@
 import 'package:flutter/material.dart';
 import 'notifications_page.dart';
+import 'main.dart' show launchUnity;
 
-class VRSessionDetailsPage extends StatelessWidget {
+class VRSessionDetailsPage extends StatefulWidget {
   const VRSessionDetailsPage({super.key});
+
+  @override
+  VRSessionDetailsPageState createState() => VRSessionDetailsPageState();
+}
+
+class VRSessionDetailsPageState extends State<VRSessionDetailsPage> {
+  String videoUrl =
+      "https://your-cloud-storage-link.com/video.mp4"; // Replace with backend URL
+
+  void _playVideo(BuildContext context) async {
+    try {
+      // Launch Unity app
+      await launchUnity();
+    } catch (e) {
+      // Show error message if Unity app couldn't be launched
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Failed to launch Unity: $e'),
+              const Text(
+                'Make sure the Unity app is installed and correctly configured.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +99,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Intermediate',
+                            'Beginner',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -76,7 +116,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                         ],
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () => _playVideo(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
@@ -87,8 +127,7 @@ class VRSessionDetailsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          // Add this side parameter for the border
-                          side: BorderSide(
+                          side: const BorderSide(
                             color: Colors.grey,
                             width: 1.0,
                           ),
@@ -164,6 +203,72 @@ class VRSessionDetailsPage extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Placeholder VideoPlayerScreen that doesn't rely on video_player package
+class VideoPlayerScreen extends StatelessWidget {
+  final String videoUrl;
+  const VideoPlayerScreen({super.key, required this.videoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("VR Video"),
+        backgroundColor: Colors.blue,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.videocam,
+              size: 100,
+              color: Colors.blue,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Video Player Placeholder",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Video URL: $videoUrl",
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        "Please install video_player package to play videos"),
+                  ),
+                );
+              },
+              child: const Text("Play Video"),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "To enable video playback, add video_player package to pubspec.yaml",
+              style: TextStyle(
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
