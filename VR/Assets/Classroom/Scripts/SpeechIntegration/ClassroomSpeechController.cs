@@ -255,15 +255,81 @@ namespace BrainCheck
                     
                     // Trigger animations based on the transcript content
                     TriggerAnimationsBasedOnAnalysis(response.data);
+                    
+                    // Close Unity and return to Flutter after processing is complete
+                    StartCoroutine(ReturnToFlutter());
                 }
                 else
                 {
                     Debug.LogWarning("Invalid response format from backend");
+                    // Still return to Flutter even if there's an error
+                    StartCoroutine(ReturnToFlutter());
                 }
             }
             catch (System.Exception e)
             {
                 Debug.LogError("Error processing analysis response: " + e.Message);
+                // Still return to Flutter even if there's an error
+                StartCoroutine(ReturnToFlutter());
+            }
+        }
+        
+        private IEnumerator ReturnToFlutter()
+        {
+            // Wait a short amount of time to allow animations to play
+            yield return new WaitForSeconds(2.0f);
+            
+            Debug.Log("Returning to Flutter app...");
+
+            try
+            {
+                // Clean up resources
+                if (_recordingClip != null)
+                {
+                    Destroy(_recordingClip);
+                    _recordingClip = null;
+                }
+
+                #if UNITY_ANDROID
+                try
+                {
+                    // First try to use URL scheme for consistency with iOS
+                    AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                    AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                    AndroidJavaObject intent = new AndroidJavaObject("android.content.Intent");
+                    AndroidJavaClass uriClass = new AndroidJavaClass("android.net.Uri");
+                    AndroidJavaObject uri = uriClass.CallStatic<AndroidJavaObject>("parse", "bravespace://returnFromUnity");
+                    
+                    intent.Call<AndroidJavaObject>("setAction", "android.intent.action.VIEW");
+                    intent.Call<AndroidJavaObject>("setData", uri);
+                    currentActivity.Call("startActivity", intent);
+                    currentActivity.Call("finish");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning("Failed to use URL scheme, falling back to simple finish(): " + e.Message);
+                    // Fallback to simple finish
+                    using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                    using (AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+                    {
+                        activity.Call("finish");
+                    }
+                }
+                #elif UNITY_IOS
+                // For iOS - using URL scheme
+                UnityEngine.iOS.Application.OpenURL("bravespace://returnFromUnity");
+                #endif
+                
+                // For editor testing
+                #if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+                #endif
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Error returning to Flutter: " + e.Message);
+                // Force quit as last resort
+                Application.Quit();
             }
         }
         
