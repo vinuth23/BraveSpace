@@ -73,3 +73,44 @@ class _GoalsPageState extends State<GoalsPage> {
       goals.removeAt(index);
     });
   }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    'My Goals',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: goals.length,
+                itemBuilder: (context, index) {
+                  Goal goal = goals[index];
+                  return _buildGoalCard(index, goal);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
