@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'vr_session_details_page.dart';
 import 'notifications_page.dart';
+import 'test_speech_page.dart';
+import 'main.dart' show launchUnity;
 
 class VRSessionsPage extends StatelessWidget {
   const VRSessionsPage({super.key});
@@ -74,13 +76,6 @@ class VRSessionsPage extends StatelessWidget {
                           image: 'assets/images/beginner.webp',
                           title: 'Beginner',
                           subtitle: '14 Days . 6 days per week',
-                          onTap: () {},
-                        ),
-                        const SizedBox(height: 16),
-                        _SessionCard(
-                          image: 'assets/images/intermediate.jpeg',
-                          title: 'Intermediate',
-                          subtitle: '28 Days . 2-4 days per week',
                           onTap: () {
                             Navigator.push(
                               context,
@@ -93,30 +88,50 @@ class VRSessionsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         _SessionCard(
+                          image: 'assets/images/intermediate.jpeg',
+                          title: 'Intermediate',
+                          subtitle: '28 Days . 2-4 days per week',
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 16),
+                        _SessionCard(
                           image: 'assets/images/advanced.jpg',
                           title: 'Advanced',
                           subtitle: '28 Days . 6-7 days per week',
                           onTap: () {},
-                        ),
-                        const SizedBox(height: 24),
-                        OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.cyan,
-                            side: BorderSide(color: Colors.cyan.shade300),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                          child: const Text('Customize VR Activities'),
                         ),
                       ],
                     ),
                   ),
                 ),
               ],
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 100,
+            child: Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TestSpeechPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.mic),
+                label: const Text('Try Test Speech Mode'),
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF48CAE4),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -215,7 +230,7 @@ class _SessionCard extends StatelessWidget {
                       height: 20,
                     ),
                   ),
-                  label: const Text('Play'),
+                  label: const Text('Open'),
                 ),
               ],
             ),

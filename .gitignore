@@ -1,0 +1,105 @@
+# Ignore Unity auto-generated files in VR folder
+VR/Library/
+VR/Temp/
+VR/Logs/
+VR/Obj/
+VR/Build/
+VR/Builds/
+VR/UserSettings/
+
+# Ignore Node.js dependencies in Backend folder
+Backend/node_modules/
+Backend/npm-debug.log*
+Backend/yarn-debug.log*
+Backend/yarn-error.log*
+Backend/pnpm-debug.log*
+Backend/package-lock.json
+Backend/yarn.lock
+Backend/.pnpm-debug.log
+
+# Ignore Flutter build files in Frontend folder
+Frontend/build/
+Frontend/.android/
+Frontend/.ios/
+Frontend/.flutter-plugins
+Frontend/.flutter-plugins-dependencies
+Frontend/.flutter-versions
+Frontend/.melos/
+Frontend/dart_tool/
+Frontend/pubspec.lock
+
+# Ignore IDE/editor specific files
+.vscode/
+.idea/
+*.iml
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db
+
+# Ignore APK folder
+/apk/
+
+# Additional Flutter build files
+**/build/
+**/.dart_tool/
+**/*.lock
+**/*.iml
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/generated_plugin_registrant.*
+**/.cxx/
+**/.cxx/**/
+**/*.fingerprint.bin
+**/index-*.json
+**/.android/
+**/.ios/
+**/.melos/
+
+# Additional Unity files to ignore
+**/.utmp/
+**/.vs/
+**/.vsconfig
+**/UpgradeLog.htm
+**/*.sln
+**/Built/
+**/Logs/
+**/Library/
+**/Temp/
+**/obj/
+**/Assets/Class4/
+**/Assets/Class4.meta
+**/Assets/Settings/
+**/Assets/Settings.meta
+**/Assets/TutorialInfo/
+**/Assets/TutorialInfo.meta
+**/Assets/Scripts/SpeechRecorder.cs
+**/Assets/Scripts/SpeechRecorderUI.cs
+**/Assets/InputSystem_Actions.inputactions
+**/Assets/Readme.asset
+
+# Force ignore any remaining specific Unity and Flutter files
+**/VR/Assembly-CSharp*.csproj
+**/VR/README.md
+**/VR/*.sln
+**/VR/eg.txt
+**/VR/.gitignore.txt
+
+# Untracked directories to ignore
+**/VR/Assets/Animation/
+**/VR/Assets/Animation.meta
+**/VR/Assets/Classroom/
+**/VR/Assets/Classroom.meta
+**/VR/Assets/FlutterUnityIntegration/
+**/VR/Assets/FlutterUnityIntegration.meta
+**/VR/Assets/Materials/
+**/VR/Assets/Materials.meta
+**/VR/Assets/Plugins/
+**/VR/Assets/SpeechRecognition/
+**/VR/Assets/SpeechRecognition.meta
+
+# Ignore Unity_Build_Instructions.md
+/Unity_Build_Instructions.md
