@@ -66,24 +66,4 @@ Thumbs.db
 **/VR/eg.txt
 **/VR/.gitignore.txt
 
-# Untracked directories to ignore
-**/VR/Assets/Animation/
-**/VR/Assets/Animation.meta
-**/VR/Assets/Classroom/
-**/VR/Assets/Classroom.meta
-**/VR/Assets/FlutterUnityIntegration/
-**/VR/Assets/FlutterUnityIntegration.meta
-**/VR/Assets/Materials/
-**/VR/Assets/Materials.meta
-**/VR/Assets/Plugins/
-**/VR/Assets/SpeechRecognition/
-**/VR/Assets/SpeechRecognition.meta
 
-# Exceptions - these files should NOT be ignored
-!VR/Assets/Classroom/Scripts/
-!VR/Assets/Classroom/Scripts.meta
-!VR/Assets/Classroom/Scripts/SpeechIntegration/
-!VR/Assets/Classroom/Scripts/SpeechIntegration/**
-
-# Ignore Unity_Build_Instructions.md
-/Unity_Build_Instructions.md
