@@ -35,3 +35,30 @@ class GoalsPage extends StatefulWidget {
   @override
   _GoalsPageState createState() => _GoalsPageState();
 }
+class _GoalsPageState extends State<GoalsPage> {
+  List<Goal> goals = [
+    Goal(
+      title: "Weekly Social Challenge",
+      description: "Complete 2 different social interaction scenarios",
+      progress: 1,
+      total: 2,
+      icon: Icons.track_changes,
+      iconColor: Colors.blue,
+    ),
+    Goal(
+      title: "Emotional Explorer",
+      description: "Correctly identify emotions in 2 scenarios",
+      progress: 1,
+      total: 2,
+      icon: Icons.star,
+      iconColor: Colors.purple,
+    ),
+    Goal(
+      title: "Conversation Confidence",
+      description: "Practice conversations in 3 different scenarios",
+      progress: 2,
+      total: 3,
+      icon: Icons.chat_bubble_outline,
+      iconColor: Colors.green,
+    ),
+  ];
