@@ -59,8 +59,6 @@ Thumbs.db
 **/.ios/
 **/.melos/
 
-
-
 # Force ignore any remaining specific Unity and Flutter files
 **/VR/Assembly-CSharp*.csproj
 **/VR/README.md
@@ -80,6 +78,12 @@ Thumbs.db
 **/VR/Assets/Plugins/
 **/VR/Assets/SpeechRecognition/
 **/VR/Assets/SpeechRecognition.meta
+
+# Exceptions - these files should NOT be ignored
+!VR/Assets/Classroom/Scripts/
+!VR/Assets/Classroom/Scripts.meta
+!VR/Assets/Classroom/Scripts/SpeechIntegration/
+!VR/Assets/Classroom/Scripts/SpeechIntegration/**
 
 # Ignore Unity_Build_Instructions.md
 /Unity_Build_Instructions.md
