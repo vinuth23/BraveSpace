@@ -1012,10 +1012,20 @@ class _ProgressPageState extends State<ProgressPage>
     );
   }
 
-  double _getAverageScore(Map<String, double> metrics) {
-    if (metrics.isEmpty) return 0;
-    final sum = metrics.values.reduce((a, b) => a + b);
-    return sum / metrics.length;
+  double _getAverageScore(Map<String, dynamic> metrics) {
+    if (metrics.isEmpty) return 0.0;
+
+    double total = 0.0;
+    int count = 0;
+
+    metrics.forEach((key, value) {
+      if (value is num) {
+        total += value.toDouble();
+        count++;
+      }
+    });
+
+    return count > 0 ? total / count : 0.0;
   }
 
   void _showSessionDetails(SpeechSession session) {
