@@ -29,19 +29,19 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      print('🔑 Attempting login...');
+      print('Attempting login...');
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      print('✅ Firebase login successful');
+      print('Firebase login successful');
       final String? idToken = await userCredential.user?.getIdToken();
-      print('🎫 Got ID token: ${idToken?.substring(0, 20)}...');
+      print('Got ID token: ${idToken?.substring(0, 20)}...');
 
       if (idToken != null) {
-        print('🚀 Sending token to backend...');
+        print('Sending token to backend...');
         try {
           final response = await http.post(
             Uri.parse(
@@ -54,16 +54,16 @@ class _LoginPageState extends State<LoginPage> {
             body: json.encode({'idToken': idToken}),
           );
 
-          print('📥 Backend response status: ${response.statusCode}');
-          print('📥 Backend response body: ${response.body}');
+          print('Backend response status: ${response.statusCode}');
+          print('Backend response body: ${response.body}');
 
           if (response.statusCode != 200) {
             throw Exception(
                 'Backend returned ${response.statusCode}: ${response.body}');
           }
-          print('✨ Token verification successful!');
+          print('Token verification successful!');
         } catch (e) {
-          print('❌ Backend communication error: $e');
+          print('Backend communication error: $e');
           throw Exception('Failed to verify token with backend: $e');
         }
       }

@@ -32,7 +32,7 @@ class HomePageState extends State<HomePage> {
 
       // Get user data
       final user = _auth.currentUser;
-      print('👤 Current user: ${user?.uid}');
+      print('Current user: ${user?.uid}');
 
       if (user != null) {
         // Add a small delay to ensure Firestore writes are complete
@@ -40,38 +40,38 @@ class HomePageState extends State<HomePage> {
 
         final userData =
             await _firestore.collection('users').doc(user.uid).get();
-        print('📝 User data: ${userData.data()}');
+        print('User data: ${userData.data()}');
         final firstName = userData.data()?['firstName'] ?? '';
 
         // Get challenges without date filter
-        print('🎯 Fetching challenges...');
+        print('Fetching challenges...');
         final challengesSnapshot = await _firestore
             .collection('challenges')
             .where('userId', isEqualTo: user.uid)
             .get();
 
-        print('📊 Found ${challengesSnapshot.docs.length} challenges');
+        print('Found ${challengesSnapshot.docs.length} challenges');
         if (challengesSnapshot.docs.isEmpty) {
-          print('❌ No challenges found for user');
+          print('No challenges found for user');
         } else {
           for (var doc in challengesSnapshot.docs) {
-            print('📋 Challenge data: ${doc.data()}');
+            print('Challenge data: ${doc.data()}');
           }
         }
 
         // Get upcoming sessions
-        print('📅 Fetching sessions...');
+        print('Fetching sessions...');
         final sessionsSnapshot = await _firestore
             .collection('sessions')
             .where('userId', isEqualTo: user.uid)
             .get(); // Remove time filter temporarily
 
-        print('🗓 Found ${sessionsSnapshot.docs.length} sessions');
+        print('Found ${sessionsSnapshot.docs.length} sessions');
         if (sessionsSnapshot.docs.isEmpty) {
-          print('❌ No sessions found for user');
+          print('No sessions found for user');
         } else {
           for (var doc in sessionsSnapshot.docs) {
-            print('📋 Session data: ${doc.data()}');
+            print('Session data: ${doc.data()}');
           }
         }
 
@@ -91,12 +91,12 @@ class HomePageState extends State<HomePage> {
             _isLoading = false;
           });
         }
-        print('✅ Data loaded successfully');
-        print('📊 Loaded ${_challenges.length} challenges');
-        print('📅 Loaded ${_upcomingSessions.length} sessions');
+        print('Data loaded successfully');
+        print('Loaded ${_challenges.length} challenges');
+        print('Loaded ${_upcomingSessions.length} sessions');
       }
     } catch (e) {
-      print('❌ Error loading user data: $e');
+      print('Error loading user data: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -152,7 +152,7 @@ class HomePageState extends State<HomePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Hello, $_userName 👋',
+                                  'Hello, $_userName',
                                   style: Theme.of(context)
                                       .textTheme
                                       .headlineMedium

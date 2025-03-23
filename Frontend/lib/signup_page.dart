@@ -58,7 +58,7 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => _isLoading = true);
 
     try {
-      print('🔑 Starting signup process...');
+      print('Starting signup process...');
 
       // First create user in Firebase Auth
       final userCredential =
@@ -66,8 +66,7 @@ class _SignupPageState extends State<SignupPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      print(
-          '✅ Firebase Auth account created with ID: ${userCredential.user?.uid}');
+      print('Firebase Auth account created with ID: ${userCredential.user?.uid}');
 
       // Update the user's display name first
       await userCredential.user?.updateDisplayName(
@@ -91,10 +90,10 @@ class _SignupPageState extends State<SignupPage> {
           'challenges': [],
           'sessions': [],
         });
-        print('✅ User document created in Firestore');
+        print('User document created in Firestore');
 
         // Send signup data to backend
-        print('🚀 Sending signup data to backend...');
+        print('Sending signup data to backend...');
         try {
           final response = await http.post(
             Uri.parse('http://172.20.10.7:5000/signup'),
@@ -111,8 +110,8 @@ class _SignupPageState extends State<SignupPage> {
             }),
           );
 
-          print('📥 Backend response status: ${response.statusCode}');
-          print('📥 Backend response body: ${response.body}');
+          print('Backend response status: ${response.statusCode}');
+          print('Backend response body: ${response.body}');
 
           if (response.statusCode != 201 && response.statusCode != 200) {
             final errorData = json.decode(response.body);
@@ -128,17 +127,17 @@ class _SignupPageState extends State<SignupPage> {
             );
           }
         } catch (e) {
-          print('❌ Backend communication error: $e');
+          print('Backend communication error: $e');
           // Don't delete the user if backend fails, just log the error
-          print('⚠️ Backend signup failed but user was created in Firebase');
+          print('Backend signup failed but user was created in Firebase');
         }
       } catch (e) {
-        print('❌ Error creating Firestore user document: $e');
+        print('Error creating Firestore user document: $e');
         await userCredential.user?.delete();
         throw Exception('Failed to create user profile: $e');
       }
     } catch (e) {
-      print('❌ Error during signup: $e');
+      print('Error during signup: $e');
       String message = 'Registration failed';
       if (e is FirebaseAuthException) {
         if (e.code == 'weak-password') {
