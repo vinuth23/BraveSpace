@@ -59,27 +59,7 @@ Thumbs.db
 **/.ios/
 **/.melos/
 
-# Additional Unity files to ignore
-**/.utmp/
-**/.vs/
-**/.vsconfig
-**/UpgradeLog.htm
-**/*.sln
-**/Built/
-**/Logs/
-**/Library/
-**/Temp/
-**/obj/
-**/Assets/Class4/
-**/Assets/Class4.meta
-**/Assets/Settings/
-**/Assets/Settings.meta
-**/Assets/TutorialInfo/
-**/Assets/TutorialInfo.meta
-**/Assets/Scripts/SpeechRecorder.cs
-**/Assets/Scripts/SpeechRecorderUI.cs
-**/Assets/InputSystem_Actions.inputactions
-**/Assets/Readme.asset
+
 
 # Force ignore any remaining specific Unity and Flutter files
 **/VR/Assembly-CSharp*.csproj
