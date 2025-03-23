@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'therapist_dashboard.dart';
 import 'leaderboard_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -24,10 +25,52 @@ class _ProfilePageState extends State<ProfilePage> {
   String _userRole = 'child';
   bool _isLoading = true;
 
+  // Avatar properties
+  Color _selectedSkinTone = const Color(0xFFEAC393); // Default skin tone
+  int _selectedFaceIndex = 0;
+  int _selectedHeadIndex = 0;
+
+  // Mapping for head images with corresponding skin tone versions
+  final Map<int, Map<Color, String>> headImagesBySkinTone = {
+    0: {
+      const Color(0xFFFFDCB5): 'assets/images/head1_light.png',
+      const Color(0xFFEAC393): 'assets/images/head1_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head1_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head1_darkest.png',
+    },
+    1: {
+      const Color(0xFFFFDCB5): 'assets/images/head2_light.png',
+      const Color(0xFFEAC393): 'assets/images/head2_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head2_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head2_darkest.png',
+    },
+    2: {
+      const Color(0xFFFFDCB5): 'assets/images/head3_light.png',
+      const Color(0xFFEAC393): 'assets/images/head3_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head3_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head3_darkest.png',
+    },
+    3: {
+      const Color(0xFFFFDCB5): 'assets/images/head4_light.png',
+      const Color(0xFFEAC393): 'assets/images/head4_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head4_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head4_darkest.png',
+    },
+  };
+
+  // Face expressions
+  final List<String> faceExpressions = [
+    'assets/images/normal.png',
+    'assets/images/smiling.png',
+    'assets/images/love_eyes.png',
+    'assets/images/close_eye.png',
+  ];
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadAvatarData(); // Load avatar data
   }
 
   Future<void> _loadUserData() async {
@@ -61,6 +104,15 @@ class _ProfilePageState extends State<ProfilePage> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadAvatarData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedSkinTone = Color(prefs.getInt('skinTone') ?? 0xFFEAC393);
+      _selectedFaceIndex = prefs.getInt('faceIndex') ?? 0;
+      _selectedHeadIndex = prefs.getInt('headIndex') ?? 0;
+    });
   }
 
   Future<void> _signOut(BuildContext context) async {
@@ -158,18 +210,31 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       child: Column(
                         children: [
+                          // Avatar preview
                           CircleAvatar(
                             radius: 50,
                             backgroundColor: Colors.cyan.shade200,
-                            child: Text(
-                              _firstName.isNotEmpty && _lastName.isNotEmpty
-                                  ? '${_firstName[0]}${_lastName[0]}'
-                                  : 'U',
-                              style: const TextStyle(
-                                fontSize: 36,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Head preview
+                                Image.asset(
+                                  headImagesBySkinTone[_selectedHeadIndex]
+                                          ?[_selectedSkinTone] ??
+                                      'assets/images/head_default.png', // Fallback image
+                                  width: 80,
+                                  height: 80,
+                                ),
+                                // Face expression
+                                Positioned(
+                                  top: 20,
+                                  child: Image.asset(
+                                    faceExpressions[_selectedFaceIndex],
+                                    width: 40,
+                                    height: 40,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),

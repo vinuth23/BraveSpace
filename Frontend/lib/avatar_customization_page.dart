@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'notifications_page.dart';
 
 class AvatarCustomizationPage extends StatelessWidget {
@@ -96,10 +96,29 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize original values
-    originalSkinTone = selectedSkinTone; // Default to Medium skin tone
-    originalFaceIndex = selectedFaceIndex;
-    originalHeadIndex = selectedHeadIndex; // Default to Head 1
+    _loadAvatarData(); // Load saved avatar data
+  }
+
+  Future<void> _loadAvatarData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      // Load saved skin tone, face index, and head index
+      selectedSkinTone = Color(prefs.getInt('skinTone') ?? 0xFFEAC393);
+      selectedFaceIndex = prefs.getInt('faceIndex') ?? 0;
+      selectedHeadIndex = prefs.getInt('headIndex') ?? 0;
+
+      // Initialize original values for reset functionality
+      originalSkinTone = selectedSkinTone;
+      originalFaceIndex = selectedFaceIndex;
+      originalHeadIndex = selectedHeadIndex;
+    });
+  }
+
+  Future<void> _saveAvatarData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('skinTone', selectedSkinTone.value);
+    await prefs.setInt('faceIndex', selectedFaceIndex);
+    await prefs.setInt('headIndex', selectedHeadIndex);
   }
 
   void resetChanges() {
@@ -113,11 +132,13 @@ class _AvatarCreatorScreenState extends State<AvatarCreatorScreen> {
     );
   }
 
-  void saveAvatar() {
-    // Save current values as original
-    originalSkinTone = selectedSkinTone;
-    originalFaceIndex = selectedFaceIndex;
-    originalHeadIndex = selectedHeadIndex;
+  void saveAvatar() async {
+    await _saveAvatarData(); // Save avatar data to local storage
+    setState(() {
+      originalSkinTone = selectedSkinTone;
+      originalFaceIndex = selectedFaceIndex;
+      originalHeadIndex = selectedHeadIndex;
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Avatar saved successfully!')),
