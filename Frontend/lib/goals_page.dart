@@ -62,3 +62,14 @@ class _GoalsPageState extends State<GoalsPage> {
       iconColor: Colors.green,
     ),
   ];
+    void _updateGoal(int index) {
+    setState(() {
+      goals[index].progress = (goals[index].progress + 1).clamp(0, goals[index].total);
+    });
+  }
+
+  void _deleteGoal(int index) {
+    setState(() {
+      goals.removeAt(index);
+    });
+  }
