@@ -13,11 +13,11 @@ namespace BrainCheck
         public bool autoStartRecording = true;
         public float maxRecordingTime = 180f; // 3 minutes max recording
         public int sampleRate = 44100;
-        public float silenceThreshold = 0.005f; // Reduced from 0.01f - more sensitive to quiet sounds
-        public float silenceTimeout = 10f; // Increased from 2f to 10f - longer silence before stopping
+        public float silenceThreshold = 0.005f; // Threshold for detecting silence
+        public float silenceTimeout = 5f; // Stop after 5 seconds of silence
         
         [Header("Backend Settings")]
-        public string backendUrl = "http://172.20.10.7:5000"; // Default backend URL - change to your backend URL
+        public string backendUrl = "http://localhost:5000"; // Change this to your backend URL
         public string speechAnalysisEndpoint = "/api/test/speech/upload";
         
         [Header("Animation")]
@@ -28,7 +28,6 @@ namespace BrainCheck
         private float _recordingTime = 0f;
         private float _silenceTimer = 0f;
         private string _outputFilePath;
-        private string _userId;
         
         void Start()
         {
@@ -38,9 +37,6 @@ namespace BrainCheck
                 Debug.LogError("No microphone detected!");
                 return;
             }
-            
-            // Get Firebase user ID - assumes you have a Firebase Auth Manager elsewhere
-            StartCoroutine(GetUserIdFromFirebase());
             
             if (autoStartRecording)
             {
@@ -63,12 +59,10 @@ namespace BrainCheck
                 
                 // Check for silence
                 float level = GetCurrentAudioLevel();
-                Debug.Log("Current audio level: " + level); // Debug log to monitor audio levels
                 
                 if (level < silenceThreshold)
                 {
                     _silenceTimer += Time.deltaTime;
-                    Debug.Log("Silence detected. Timer: " + _silenceTimer + " / " + silenceTimeout);
                     if (_silenceTimer >= silenceTimeout)
                     {
                         // Stop if there's been silence for a while
@@ -84,28 +78,12 @@ namespace BrainCheck
             }
         }
         
-        private IEnumerator GetUserIdFromFirebase()
-        {
-            // This is a placeholder. You'll need to implement this based on your Firebase Auth integration
-            // In a real implementation, you would get this from your Firebase Auth service
-            
-            _userId = "test_user"; // Default value
-            
-            // Try to get user ID from PlayerPrefs as an example
-            if (PlayerPrefs.HasKey("FirebaseUserId"))
-            {
-                _userId = PlayerPrefs.GetString("FirebaseUserId");
-            }
-            
-            yield return null;
-        }
-        
         public void StartRecording()
         {
             if (_isRecording)
                 return;
             
-            Debug.Log("Starting silent speech recording...");
+            Debug.Log("Starting speech recording...");
             
             if (Microphone.devices.Length <= 0)
             {
@@ -138,6 +116,11 @@ namespace BrainCheck
                 
                 // Send the recording to backend
                 StartCoroutine(SendAudioToBackend());
+            }
+            else
+            {
+                // If recording was too short, just return to Flutter
+                StartCoroutine(ReturnToFlutter());
             }
             
             _isRecording = false;
@@ -193,6 +176,7 @@ namespace BrainCheck
             if (string.IsNullOrEmpty(_outputFilePath) || !File.Exists(_outputFilePath))
             {
                 Debug.LogError("No recording file found!");
+                StartCoroutine(ReturnToFlutter()); // Return to Flutter even if error
                 yield break;
             }
             
@@ -201,45 +185,46 @@ namespace BrainCheck
             byte[] audioBytes = File.ReadAllBytes(_outputFilePath);
             form.AddBinaryData("audio", audioBytes, Path.GetFileName(_outputFilePath), "audio/wav");
             
-            // Add user ID if available
-            if (!string.IsNullOrEmpty(_userId))
-            {
-                form.AddField("userId", _userId);
-            }
-            
             // Construct the endpoint URL
             string url = backendUrl + speechAnalysisEndpoint;
             
+            Debug.Log("Sending request to: " + url);
+            
             // Send request
-            using (UnityWebRequest request = UnityWebRequest.Post(url, form))
+            UnityWebRequest request = UnityWebRequest.Post(url, form);
+            
+            // Accept all certificates (for development)
+            request.certificateHandler = new AcceptAllCertificates();
+            request.disposeCertificateHandlerOnDispose = true;
+            
+            // Send the request
+            yield return request.SendWebRequest();
+            
+            if (request.result != UnityWebRequest.Result.Success)
             {
-                // Allow insecure connections for development
-                #if UNITY_2022_1_OR_NEWER
-                request.certificateHandler = new AcceptAllCertificates();
-                #endif
+                Debug.LogError("Error sending audio: " + request.error);
+                // Return to Flutter despite the error
+                StartCoroutine(ReturnToFlutter());
+            }
+            else
+            {
+                Debug.Log("Audio sent successfully!");
+                string response = request.downloadHandler.text;
+                Debug.Log("Response: " + response);
                 
-                // Disable secure connection check
-                request.certificateHandler = new AcceptAllCertificates();
-                request.disposeCertificateHandlerOnDispose = true;
-                
-                // Add authorization header if needed
-                // request.SetRequestHeader("Authorization", "Bearer " + _authToken);
-                
-                yield return request.SendWebRequest();
-                
-                if (request.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError("Error sending audio: " + request.error);
-                }
-                else
-                {
-                    Debug.Log("Audio sent successfully!");
-                    ProcessAnalysisResponse(request.downloadHandler.text);
-                }
+                ProcessAnalysisResponse(response);
             }
             
-            // Clean up the local file after sending (optional)
-            // File.Delete(_outputFilePath);
+            // Clean up
+            request.Dispose();
+            
+            // Optional: Remove the local file after sending
+            try {
+                File.Delete(_outputFilePath);
+                Debug.Log("Deleted temporary audio file");
+            } catch (Exception e) {
+                Debug.LogWarning("Could not delete temporary file: " + e.Message);
+            }
         }
         
         private void ProcessAnalysisResponse(string jsonResponse)
@@ -255,23 +240,19 @@ namespace BrainCheck
                     
                     // Trigger animations based on the transcript content
                     TriggerAnimationsBasedOnAnalysis(response.data);
-                    
-                    // Close Unity and return to Flutter after processing is complete
-                    StartCoroutine(ReturnToFlutter());
                 }
                 else
                 {
                     Debug.LogWarning("Invalid response format from backend");
-                    // Still return to Flutter even if there's an error
-                    StartCoroutine(ReturnToFlutter());
                 }
             }
             catch (System.Exception e)
             {
                 Debug.LogError("Error processing analysis response: " + e.Message);
-                // Still return to Flutter even if there's an error
-                StartCoroutine(ReturnToFlutter());
             }
+            
+            // Always return to Flutter after processing (whether successful or not)
+            StartCoroutine(ReturnToFlutter());
         }
         
         private IEnumerator ReturnToFlutter()
@@ -280,7 +261,7 @@ namespace BrainCheck
             yield return new WaitForSeconds(2.0f);
             
             Debug.Log("Returning to Flutter app...");
-
+            
             try
             {
                 // Clean up resources
@@ -289,32 +270,12 @@ namespace BrainCheck
                     Destroy(_recordingClip);
                     _recordingClip = null;
                 }
-
+                
                 #if UNITY_ANDROID
-                try
-                {
-                    // First try to use URL scheme for consistency with iOS
-                    AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                    AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                    AndroidJavaObject intent = new AndroidJavaObject("android.content.Intent");
-                    AndroidJavaClass uriClass = new AndroidJavaClass("android.net.Uri");
-                    AndroidJavaObject uri = uriClass.CallStatic<AndroidJavaObject>("parse", "bravespace://returnFromUnity");
-                    
-                    intent.Call<AndroidJavaObject>("setAction", "android.intent.action.VIEW");
-                    intent.Call<AndroidJavaObject>("setData", uri);
-                    currentActivity.Call("startActivity", intent);
-                    currentActivity.Call("finish");
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning("Failed to use URL scheme, falling back to simple finish(): " + e.Message);
-                    // Fallback to simple finish
-                    using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-                    using (AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
-                    {
-                        activity.Call("finish");
-                    }
-                }
+                // For Android
+                AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                currentActivity.Call("finish");
                 #elif UNITY_IOS
                 // For iOS - using URL scheme
                 UnityEngine.iOS.Application.OpenURL("bravespace://returnFromUnity");
@@ -511,7 +472,7 @@ namespace BrainCheck
         }
     }
 
-    // Class to accept all certificates - add this inside the BrainCheck namespace
+    // Class to accept all certificates
     public class AcceptAllCertificates : UnityEngine.Networking.CertificateHandler
     {
         protected override bool ValidateCertificate(byte[] certificateData)
