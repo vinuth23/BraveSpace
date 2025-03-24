@@ -1,0 +1,78 @@
+# Ignore Unity auto-generated files in VR folder
+VR/Library/
+VR/Temp/
+VR/Logs/
+VR/Obj/
+VR/Build/
+VR/Builds/
+VR/UserSettings/
+
+# Ignore Unity auto-generated files in VR folder
+playground/Library/
+playground/Temp/
+playground/Logs/
+playground/Obj/
+playground/Build/
+playground/Builds/
+playground/UserSettings/
+
+# Ignore Node.js dependencies in Backend folder
+Backend/node_modules/
+Backend/npm-debug.log*
+Backend/yarn-debug.log*
+Backend/yarn-error.log*
+Backend/pnpm-debug.log*
+Backend/package-lock.json
+Backend/yarn.lock
+Backend/.pnpm-debug.log
+
+# Ignore Flutter build files in Frontend folder
+Frontend/build/
+Frontend/.android/
+Frontend/.ios/
+Frontend/.flutter-plugins
+Frontend/.flutter-plugins-dependencies
+Frontend/.flutter-versions
+Frontend/.melos/
+Frontend/dart_tool/
+Frontend/pubspec.lock
+
+# Ignore IDE/editor specific files
+.vscode/
+.idea/
+*.iml
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db
+
+# Ignore APK folder
+/apk/
+
+# Additional Flutter build files
+**/build/
+**/.dart_tool/
+**/*.lock
+**/*.iml
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/generated_plugin_registrant.*
+**/.cxx/
+**/.cxx/**/
+**/*.fingerprint.bin
+**/index-*.json
+**/.android/
+**/.ios/
+**/.melos/
+
+# Force ignore any remaining specific Unity and Flutter files
+**/VR/Assembly-CSharp*.csproj
+**/VR/README.md
+**/VR/*.sln
+**/VR/eg.txt
+**/VR/.gitignore.txt
+
+
