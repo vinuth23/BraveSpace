@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/achivements_page.dart';
+import 'package:flutter_application_1/avatar_customization_page.dart';
 import 'activity_history_page.dart';
 import 'goals_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'therapist_dashboard.dart';
+import 'leaderboard_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,32 +19,100 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String _userName = '';
+  String _firstName = '';
+  String _lastName = '';
+  String _email = '';
+  String _userRole = 'child';
   bool _isLoading = true;
+
+  // Avatar properties
+  Color _selectedSkinTone = const Color(0xFFEAC393); // Default skin tone
+  int _selectedFaceIndex = 0;
+  int _selectedHeadIndex = 0;
+
+  // Mapping for head images with corresponding skin tone versions
+  final Map<int, Map<Color, String>> headImagesBySkinTone = {
+    0: {
+      const Color(0xFFFFDCB5): 'assets/images/head1_light.png',
+      const Color(0xFFEAC393): 'assets/images/head1_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head1_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head1_darkest.png',
+    },
+    1: {
+      const Color(0xFFFFDCB5): 'assets/images/head2_light.png',
+      const Color(0xFFEAC393): 'assets/images/head2_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head2_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head2_darkest.png',
+    },
+    2: {
+      const Color(0xFFFFDCB5): 'assets/images/head3_light.png',
+      const Color(0xFFEAC393): 'assets/images/head3_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head3_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head3_darkest.png',
+    },
+    3: {
+      const Color(0xFFFFDCB5): 'assets/images/head4_light.png',
+      const Color(0xFFEAC393): 'assets/images/head4_medium.png',
+      const Color(0xFFBF8A63): 'assets/images/head4_dark.png',
+      const Color(0xFF7D5339): 'assets/images/head4_darkest.png',
+    },
+  };
+
+  // Face expressions
+  final List<String> faceExpressions = [
+    'assets/images/normal.png',
+    'assets/images/smiling.png',
+    'assets/images/love_eyes.png',
+    'assets/images/close_eye.png',
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadAvatarData(); // Load avatar data
   }
 
   Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      final user = _auth.currentUser;
+      final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final userData =
-            await _firestore.collection('users').doc(user.uid).get();
-        if (userData.exists) {
+        // Fetch user data from Firestore
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data();
           setState(() {
-            _userName = '${userData['firstName']} ${userData['lastName']}';
-            _isLoading = false;
+            _firstName = userData?['firstName'] ?? '';
+            _lastName = userData?['lastName'] ?? '';
+            _email = userData?['email'] ?? '';
+            _userRole = userData?['role'] ?? 'child';
           });
         }
       }
     } catch (e) {
       print('Error loading user data: $e');
-      setState(() => _isLoading = false);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
+  }
+
+  Future<void> _loadAvatarData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedSkinTone = Color(prefs.getInt('skinTone') ?? 0xFFEAC393);
+      _selectedFaceIndex = prefs.getInt('faceIndex') ?? 0;
+      _selectedHeadIndex = prefs.getInt('headIndex') ?? 0;
+    });
   }
 
   Future<void> _signOut(BuildContext context) async {
@@ -120,33 +193,87 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Profile Header
-                    Center(
+                    // User information card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 10,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
                       child: Column(
                         children: [
+                          // Avatar preview
                           CircleAvatar(
-                            radius: 40,
-                            backgroundColor: Colors.white,
-                            child: const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _isLoading
-                              ? const CircularProgressIndicator()
-                              : Text(
-                                  _userName,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                            radius: 50,
+                            backgroundColor: Colors.cyan.shade200,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Head preview
+                                Image.asset(
+                                  headImagesBySkinTone[_selectedHeadIndex]
+                                          ?[_selectedSkinTone] ??
+                                      'assets/images/head_default.png', // Fallback image
+                                  width: 80,
+                                  height: 80,
+                                ),
+                                // Face expression
+                                Positioned(
+                                  top: 20,
+                                  child: Image.asset(
+                                    faceExpressions[_selectedFaceIndex],
+                                    width: 40,
+                                    height: 40,
                                   ),
                                 ),
-                          const Text(
-                            'Sri Lanka',
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            '$_firstName $_lastName',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _email,
                             style: TextStyle(
-                              color: Colors.black,
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Display user role
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getRoleColor().withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _getRoleColor(),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              _userRole.toUpperCase(),
+                              style: TextStyle(
+                                color: _getRoleColor(),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -247,17 +374,39 @@ class _ProfilePageState extends State<ProfilePage> {
                     _buildMenuItem(
                       icon: Icons.person_outline,
                       title: 'Avatar customization',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const AvatarCustomizationPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildMenuItem(
                       icon: Icons.leaderboard_outlined,
                       title: 'Leaderboard',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LeaderboardPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildMenuItem(
                       icon: Icons.emoji_events_outlined,
                       title: 'Achievements',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AchivementsPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildMenuItem(
                       icon: Icons.history_outlined,
@@ -283,6 +432,20 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                     ),
+                    // Show Therapist Dashboard option only for therapists and parents
+                    if (_userRole == 'therapist' || _userRole == 'parent')
+                      _buildMenuItem(
+                        icon: Icons.dashboard_outlined,
+                        title: 'Therapist Dashboard',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TherapistDashboard(),
+                            ),
+                          );
+                        },
+                      ),
                     const SizedBox(height: 24),
 
                     // Logout Button
@@ -337,5 +500,19 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: onTap,
       ),
     );
+  }
+
+  // Helper method to get role color
+  Color _getRoleColor() {
+    switch (_userRole) {
+      case 'therapist':
+        return Colors.purple;
+      case 'parent':
+        return Colors.green;
+      case 'child':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }

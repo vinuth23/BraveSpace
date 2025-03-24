@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'home_page.dart';
 import 'notifications_page.dart';
 import 'vr_sessions_page.dart';
@@ -14,19 +15,141 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'test_speech_page.dart';
 import 'speech_analysis_page.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'dart:io' show Platform;
+import 'therapist_dashboard.dart';
 
 export 'main.dart' show MainNavigatorState;
+
+// Function to launch Unity application
+Future<void> launchUnity() async {
+  // On Android, we have multiple approaches to try
+  if (Platform.isAndroid) {
+    // First try using android_intent_plus for direct launch
+    try {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.MAIN',
+        package: 'com.DefaultCompany.classroomtest',
+        componentName: 'com.unity3d.player.UnityPlayerActivity',
+      );
+      await intent.launch();
+      return; // Successfully launched
+    } catch (e) {
+      print('Error launching Unity with AndroidIntent: $e');
+      // Fall through to try other methods
+    }
+
+    // Try with full activity path
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse(
+            "android-app://com.DefaultCompany.classroomtest/com.unity3d.player.UnityPlayerActivity"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity by activity: $e');
+      // Fall through to try other methods
+    }
+
+    // Try with package name directly
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("android-app://com.DefaultCompany.classroomtest"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity by package name: $e');
+      // Fall through to try other methods
+    }
+
+    // Try with standard deep link
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("unityapp://open"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity with deep link: $e');
+      // Fall through to try other methods
+    }
+
+    // Try with alternative deep link scheme
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("bravespace://vr/launch"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return; // Successfully launched
+      }
+    } catch (e) {
+      print('Error launching Unity with alternative deep link: $e');
+      // Fall through to try other methods
+    }
+  } else {
+    // For iOS or other platforms, just try the deep link
+    try {
+      final bool launched = await launchUrl(
+        Uri.parse("unityapp://open"),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw Exception('Failed to launch Unity app');
+      }
+    } catch (e) {
+      print('Error launching Unity: $e');
+      rethrow;
+    }
+  }
+
+  // If all else fails, throw an exception
+  throw Exception(
+      'Could not launch Unity app. Make sure it is installed and correctly configured.');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Initialize Firebase before running the app.
+
+  // Initialize the app
   runApp(const MyApp());
 }
 
 // commit check
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Handle app lifecycle changes if needed
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +175,35 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           if (snapshot.hasData) {
-            // User is logged in, navigate to main app
-            return const MainNavigator();
+            // User is logged in, check their role
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(snapshot.data!.uid)
+                  .get(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (userSnapshot.hasData && userSnapshot.data != null) {
+                  final userData =
+                      userSnapshot.data!.data() as Map<String, dynamic>?;
+                  final userRole = userData?['role'] as String? ?? 'child';
+
+                  // Navigate based on user role
+                  if (userRole == 'therapist' || userRole == 'parent') {
+                    return const TherapistDashboard();
+                  } else {
+                    // Default to child role
+                    return const MainNavigator();
+                  }
+                } else {
+                  // If we can't get user data, default to main navigator
+                  return const MainNavigator();
+                }
+              },
+            );
           } else {
             // User is not logged in, navigate to login page
             return const LoginPage();

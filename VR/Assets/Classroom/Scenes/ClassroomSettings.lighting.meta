@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d2fd982cb18340e4b8269fb75a4cdc11
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4890085278179872738
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 97585
+  packageName: Simple Classroom
+  packageVersion: 2.1
+  assetPath: Assets/Classroom/Scenes/ClassroomSettings.lighting
+  uploadId: 540986

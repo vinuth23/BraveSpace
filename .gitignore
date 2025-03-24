@@ -38,3 +38,32 @@ Frontend/pubspec.lock
 
 # Ignore Windows system files
 Thumbs.db
+
+# Ignore APK folder
+/apk/
+
+# Additional Flutter build files
+**/build/
+**/.dart_tool/
+**/*.lock
+**/*.iml
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/generated_plugin_registrant.*
+**/.cxx/
+**/.cxx/**/
+**/*.fingerprint.bin
+**/index-*.json
+**/.android/
+**/.ios/
+**/.melos/
+
+# Force ignore any remaining specific Unity and Flutter files
+**/VR/Assembly-CSharp*.csproj
+**/VR/README.md
+**/VR/*.sln
+**/VR/eg.txt
+**/VR/.gitignore.txt
+
+

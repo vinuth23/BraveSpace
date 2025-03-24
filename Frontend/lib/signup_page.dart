@@ -22,6 +22,10 @@ class _SignupPageState extends State<SignupPage> {
   bool _agreedToTerms = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String _selectedRole = 'child'; // Default role
+
+  // Define available roles
+  final List<String> _roles = ['child', 'parent', 'therapist'];
 
   Future<void> _signup() async {
     if (_firstNameController.text.isEmpty ||
@@ -54,7 +58,7 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => _isLoading = true);
 
     try {
-      print('🔑 Starting signup process...');
+      print('Starting signup process...');
 
       // First create user in Firebase Auth
       final userCredential =
@@ -62,8 +66,7 @@ class _SignupPageState extends State<SignupPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      print(
-          '✅ Firebase Auth account created with ID: ${userCredential.user?.uid}');
+      print('Firebase Auth account created with ID: ${userCredential.user?.uid}');
 
       // Update the user's display name first
       await userCredential.user?.updateDisplayName(
@@ -81,15 +84,16 @@ class _SignupPageState extends State<SignupPage> {
           'lastName': _lastNameController.text.trim(),
           'displayName':
               '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+          'role': _selectedRole,
           'createdAt': FieldValue.serverTimestamp(),
           'lastLogin': FieldValue.serverTimestamp(),
           'challenges': [],
           'sessions': [],
         });
-        print('✅ User document created in Firestore');
+        print('User document created in Firestore');
 
         // Send signup data to backend
-        print('🚀 Sending signup data to backend...');
+        print('Sending signup data to backend...');
         try {
           final response = await http.post(
             Uri.parse('http://172.20.10.7:5000/signup'),
@@ -102,11 +106,12 @@ class _SignupPageState extends State<SignupPage> {
               'email': _emailController.text.trim(),
               'firstName': _firstNameController.text.trim(),
               'lastName': _lastNameController.text.trim(),
+              'role': _selectedRole,
             }),
           );
 
-          print('📥 Backend response status: ${response.statusCode}');
-          print('📥 Backend response body: ${response.body}');
+          print('Backend response status: ${response.statusCode}');
+          print('Backend response body: ${response.body}');
 
           if (response.statusCode != 201 && response.statusCode != 200) {
             final errorData = json.decode(response.body);
@@ -122,17 +127,17 @@ class _SignupPageState extends State<SignupPage> {
             );
           }
         } catch (e) {
-          print('❌ Backend communication error: $e');
+          print('Backend communication error: $e');
           // Don't delete the user if backend fails, just log the error
-          print('⚠️ Backend signup failed but user was created in Firebase');
+          print('Backend signup failed but user was created in Firebase');
         }
       } catch (e) {
-        print('❌ Error creating Firestore user document: $e');
+        print('Error creating Firestore user document: $e');
         await userCredential.user?.delete();
         throw Exception('Failed to create user profile: $e');
       }
     } catch (e) {
-      print('❌ Error during signup: $e');
+      print('Error during signup: $e');
       String message = 'Registration failed';
       if (e is FirebaseAuthException) {
         if (e.code == 'weak-password') {
@@ -264,6 +269,50 @@ class _SignupPageState extends State<SignupPage> {
                               horizontal: 16,
                               vertical: 12,
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Role selection dropdown
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Role',
+                              prefixIcon: Icon(Icons.badge_outlined),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
+                            ),
+                            value: _selectedRole,
+                            items: _roles.map((String role) {
+                              return DropdownMenuItem<String>(
+                                value: role,
+                                child: Text(
+                                  role.substring(0, 1).toUpperCase() +
+                                      role.substring(1),
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  _selectedRole = newValue;
+                                });
+                              }
+                            },
+                            isExpanded: true,
                           ),
                         ),
                         const SizedBox(height: 16),

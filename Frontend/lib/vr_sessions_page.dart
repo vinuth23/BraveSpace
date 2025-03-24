@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'vr_session_details_page.dart';
 import 'notifications_page.dart';
 import 'test_speech_page.dart';
+import 'main.dart' show launchUnity;
 
 class VRSessionsPage extends StatelessWidget {
   const VRSessionsPage({super.key});
@@ -98,20 +99,6 @@ class VRSessionsPage extends StatelessWidget {
                           title: 'Advanced',
                           subtitle: '28 Days . 6-7 days per week',
                           onTap: () {},
-                        ),
-                        const SizedBox(height: 24),
-                        OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.cyan,
-                            side: BorderSide(color: Colors.cyan.shade300),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                          child: const Text('Customize VR Activities'),
                         ),
                       ],
                     ),
