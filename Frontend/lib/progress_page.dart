@@ -1342,12 +1342,13 @@ class SpeechSessionDetails extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: session.metrics.entries.map<Widget>((entry) {
-              final color = _getMetricColor(entry.value);
+              final color = _getMetricColor(
+                  entry.value is num ? entry.value.toDouble() : 0.0);
               return Chip(
                 backgroundColor: color.withOpacity(0.1),
                 side: BorderSide(color: color.withOpacity(0.3)),
                 label: Text(
-                  '${entry.key}: ${entry.value.toInt()}',
+                  '${entry.key}: ${entry.value is num ? (entry.value is int ? entry.value : entry.value.toInt()) : 0}',
                   style: TextStyle(color: color),
                 ),
               );
@@ -1731,8 +1732,12 @@ class SpeechSessionDetails extends StatelessWidget {
     return Colors.red;
   }
 
-  Widget _buildScoreRow(String label, int score) {
-    Color color = _getScoreColor(score.toDouble());
+  Widget _buildScoreRow(String label, dynamic scoreValue) {
+    // Convert dynamic score to double safely
+    final score = scoreValue is num ? scoreValue.toDouble() : 0.0;
+    final scoreInt = score.toInt();
+
+    Color color = _getScoreColor(score);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1745,7 +1750,7 @@ class SpeechSessionDetails extends StatelessWidget {
               style: const TextStyle(fontSize: 16),
             ),
             Text(
-              '$score',
+              '$scoreInt',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
