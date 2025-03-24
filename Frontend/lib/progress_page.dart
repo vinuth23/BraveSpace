@@ -1371,68 +1371,192 @@ class SpeechSessionDetailsPage extends StatelessWidget {
     final feedback = processedSession['feedback'] ?? [];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Speech Session Details'),
-        backgroundColor: const Color(0xFF0077B6),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header section with date and topic
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0077B6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    topic,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${sessionDate.day}/${sessionDate.month}/${sessionDate.year} at ${sessionDate.hour}:${sessionDate.minute.toString().padLeft(2, '0')}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Duration: ${(duration / 60).floor()}:${(duration % 60).toString().padLeft(2, '0')}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
+      backgroundColor: const Color(0xFFF0F0F0),
+      body: Stack(
+        children: [
+          // Curved background
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 200,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF48CAE4),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
+          ),
+          // Content
+          SafeArea(
+            child: Column(
+              children: [
+                // App Bar
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const Text(
+                        'Session Details',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.share_outlined,
+                            color: Colors.black),
+                        onPressed: () {
+                          // Share functionality could be added here
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                // Session Header Card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                topic,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _getMetricColor(metrics['overallScore'])
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color:
+                                      _getMetricColor(metrics['overallScore'])
+                                          .withOpacity(0.5),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${metrics['overallScore'] ?? 0}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: _getMetricColor(
+                                          metrics['overallScore']),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.star,
+                                    size: 16,
+                                    color: _getMetricColor(
+                                        metrics['overallScore']),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today,
+                                size: 16, color: Colors.grey[600]),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat('MMM d, yyyy • h:mm a')
+                                  .format(sessionDate),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.timer,
+                                size: 16, color: Colors.grey[600]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Duration: ${(duration / 60).floor()}:${(duration % 60).toString().padLeft(2, '0')}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-            // Score section - use metrics instead of analysis
-            _buildScoreSection(metrics),
-            const SizedBox(height: 24),
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Score section
+                        _buildScoreSection(metrics),
+                        const SizedBox(height: 16),
 
-            // AI Feedback section
-            _buildAIFeedbackSection(feedback),
-            const SizedBox(height: 24),
+                        // AI Feedback section
+                        _buildAIFeedbackSection(feedback),
+                        const SizedBox(height: 16),
 
-            // Transcript section
-            _buildTranscriptSection(context, speechText, []),
-            const SizedBox(height: 24),
-          ],
-        ),
+                        // Transcript section
+                        _buildTranscriptSection(context, speechText, []),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1447,7 +1571,7 @@ class SpeechSessionDetailsPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -1460,21 +1584,28 @@ class SpeechSessionDetailsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Performance Scores',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Icon(Icons.analytics, color: Colors.grey[800], size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Performance Scores',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          _buildScoreRow('Overall Score', overallScore),
+          _buildScoreRow('Overall Score', overallScore, Colors.blue),
           const SizedBox(height: 12),
-          _buildScoreRow('Confidence', confidenceScore),
+          _buildScoreRow('Confidence', confidenceScore, Colors.green),
           const SizedBox(height: 12),
-          _buildScoreRow('Fluency', fluencyScore),
+          _buildScoreRow('Fluency', fluencyScore, Colors.purple),
           const SizedBox(height: 12),
-          _buildScoreRow('Clarity', clarityScore),
+          _buildScoreRow('Clarity', clarityScore, Colors.orange),
         ],
       ),
     );
@@ -1486,7 +1617,7 @@ class SpeechSessionDetailsPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -1499,19 +1630,34 @@ class SpeechSessionDetailsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Transcript',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Icon(Icons.text_fields, color: Colors.grey[800], size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Transcript',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          Text(
-            transcript,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.5,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.withOpacity(0.1)),
+            ),
+            child: Text(
+              transcript,
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -1533,28 +1679,73 @@ class SpeechSessionDetailsPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF48CAE4).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF48CAE4).withOpacity(0.3),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'AI Feedback',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Icon(Icons.lightbulb_outline, color: Colors.grey[800], size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'AI Feedback',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            feedbackText,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.5,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF48CAE4).withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF48CAE4).withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              children: feedbackText.split('\n\n').map((feedback) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: const Color(0xFF48CAE4),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          feedback,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -1562,7 +1753,7 @@ class SpeechSessionDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreRow(String label, dynamic scoreValue) {
+  Widget _buildScoreRow(String label, dynamic scoreValue, Color baseColor) {
     // More robust conversion of dynamic score to double
     double score = 0.0;
 
@@ -1588,24 +1779,51 @@ class SpeechSessionDetailsPage extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 16),
-            ),
-            Text(
-              '$scoreInt',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: baseColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$scoreInt/100',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: baseColor,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        LinearProgressIndicator(
-          value: score / 100,
-          color: color,
-          backgroundColor: Colors.grey.withOpacity(0.2),
-          minHeight: 8,
+        const SizedBox(height: 8),
+        Stack(
+          children: [
+            Container(
+              height: 10,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+            Container(
+              height: 10,
+              width: (score / 100) *
+                  100 *
+                  3, // Adjust width based on available space
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+          ],
         ),
       ],
     );
