@@ -39,7 +39,7 @@ class _ProgressPageState extends State<ProgressPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _initializeData();
     _fetchSpeechSessions();
     _fetchProgressData();
@@ -133,17 +133,137 @@ class _ProgressPageState extends State<ProgressPage>
 
       final data = json.decode(response.body);
 
-      if (response.statusCode == 200) {
-        setState(() {
-          _speechSessions = data['sessions'] ?? [];
-          _speechAnalysisLoading = false;
+      // Debug output
+      print('Response data: $data');
 
-          // Check if we're using mock data
-          if (data['mockData'] == true) {
-            _speechAnalysisError =
-                'Using sample data - database connection unavailable';
+      if (data['sessions'] != null && data['sessions'] is List) {
+        print('Number of sessions: ${data['sessions'].length}');
+
+        // Debug each session's structure
+        for (var i = 0; i < data['sessions'].length; i++) {
+          final session = data['sessions'][i];
+          print('Session $i: ${session.runtimeType}');
+
+          if (session['analysis'] != null) {
+            final analysis = session['analysis'];
+            print('  Analysis type: ${analysis.runtimeType}');
+
+            // Check score types
+            if (analysis['overallScore'] != null) {
+              print(
+                  '  overallScore: ${analysis['overallScore']} (${analysis['overallScore'].runtimeType})');
+            }
+
+            if (analysis['confidenceScore'] != null) {
+              print(
+                  '  confidenceScore: ${analysis['confidenceScore']} (${analysis['confidenceScore'].runtimeType})');
+            }
+
+            if (analysis['grammarScore'] != null) {
+              print(
+                  '  grammarScore: ${analysis['grammarScore']} (${analysis['grammarScore'].runtimeType})');
+            }
+
+            if (analysis['clarityScore'] != null) {
+              print(
+                  '  clarityScore: ${analysis['clarityScore']} (${analysis['clarityScore'].runtimeType})');
+            }
+
+            // Check speechStats
+            if (analysis['speechStats'] != null) {
+              print(
+                  '  speechStats type: ${analysis['speechStats'].runtimeType}');
+
+              final speechStats = analysis['speechStats'];
+              if (speechStats['wordCount'] != null) {
+                print(
+                    '    wordCount: ${speechStats['wordCount']} (${speechStats['wordCount'].runtimeType})');
+              }
+            }
           }
-        });
+        }
+      }
+
+      if (response.statusCode == 200) {
+        try {
+          // Process sessions to ensure proper type handling
+          final sessions =
+              (data['sessions'] as List<dynamic>? ?? []).map((session) {
+            // Ensure proper type for nested metrics
+            if (session != null &&
+                session is Map &&
+                session['analysis'] is Map) {
+              final analysis = session['analysis'] as Map<String, dynamic>;
+
+              // Safely convert all score values to integers
+              if (analysis.containsKey('overallScore') &&
+                  !(analysis['overallScore'] is num)) {
+                print(
+                    'Converting overallScore from ${analysis['overallScore'].runtimeType} to int');
+                analysis['overallScore'] = 0;
+              }
+              if (analysis.containsKey('confidenceScore') &&
+                  !(analysis['confidenceScore'] is num)) {
+                print(
+                    'Converting confidenceScore from ${analysis['confidenceScore'].runtimeType} to int');
+                analysis['confidenceScore'] = 0;
+              }
+              if (analysis.containsKey('grammarScore') &&
+                  !(analysis['grammarScore'] is num)) {
+                print(
+                    'Converting grammarScore from ${analysis['grammarScore'].runtimeType} to int');
+                analysis['grammarScore'] = 0;
+              }
+              if (analysis.containsKey('clarityScore') &&
+                  !(analysis['clarityScore'] is num)) {
+                print(
+                    'Converting clarityScore from ${analysis['clarityScore'].runtimeType} to int');
+                analysis['clarityScore'] = 0;
+              }
+
+              // Handle speech stats if they exist
+              if (analysis.containsKey('speechStats') &&
+                  analysis['speechStats'] is Map) {
+                final speechStats =
+                    analysis['speechStats'] as Map<String, dynamic>;
+
+                // Ensure word count is an integer
+                if (speechStats.containsKey('wordCount') &&
+                    !(speechStats['wordCount'] is num)) {
+                  print(
+                      'Converting wordCount from ${speechStats['wordCount'].runtimeType} to int');
+                  speechStats['wordCount'] = 0;
+                }
+
+                // Ensure sentence count is an integer
+                if (speechStats.containsKey('sentenceCount') &&
+                    !(speechStats['sentenceCount'] is num)) {
+                  print(
+                      'Converting sentenceCount from ${speechStats['sentenceCount'].runtimeType} to int');
+                  speechStats['sentenceCount'] = 0;
+                }
+              }
+            }
+            return session;
+          }).toList();
+
+          setState(() {
+            _speechSessions = sessions;
+            _speechAnalysisLoading = false;
+
+            // Check if we're using mock data
+            if (data['mockData'] == true) {
+              _speechAnalysisError =
+                  'Using sample data - database connection unavailable';
+            }
+          });
+        } catch (e) {
+          print('Error processing speech sessions: $e');
+          setState(() {
+            _speechAnalysisLoading = false;
+            _speechAnalysisError = 'Error processing speech data: $e';
+          });
+        }
       } else if (response.statusCode == 409 &&
           data['error'] == 'Missing Firestore index') {
         // Handle missing index error
@@ -191,8 +311,42 @@ class _ProgressPageState extends State<ProgressPage>
 
       final data = json.decode(response.body);
 
+      print('Progress data response: $data');
+
+      List<dynamic> processedProgressData = [];
+      if (data['progress'] != null && data['progress'] is List) {
+        print('Number of progress entries: ${data['progress'].length}');
+
+        try {
+          // Process the progress data to ensure proper types
+          processedProgressData = data['progress'].map((entry) {
+            // Debug each entry
+            print('Processing progress entry: $entry');
+
+            if (entry is Map<String, dynamic>) {
+              // Sanitize numeric fields to ensure they're all properly typed
+              final sanitizedEntry = Map<String, dynamic>.from(entry);
+
+              // Make sure all score fields are numeric
+              _ensureNumericField(sanitizedEntry, 'overallScore');
+              _ensureNumericField(sanitizedEntry, 'confidenceScore');
+              _ensureNumericField(sanitizedEntry, 'grammarScore');
+              _ensureNumericField(sanitizedEntry, 'clarityScore');
+              _ensureNumericField(sanitizedEntry, 'speechRate');
+
+              return sanitizedEntry;
+            }
+            return entry;
+          }).toList();
+        } catch (e) {
+          print('Error processing progress data: $e');
+          // Use empty list if processing fails
+          processedProgressData = [];
+        }
+      }
+
       setState(() {
-        _progressData = data['progress'] ?? [];
+        _progressData = processedProgressData;
 
         // Check if we're using mock data
         if (data['mockData'] == true) {
@@ -215,6 +369,37 @@ class _ProgressPageState extends State<ProgressPage>
         _usingMockProgressData = true;
       });
     }
+  }
+
+  // Helper method to ensure a field in a map is numeric
+  void _ensureNumericField(Map<String, dynamic> map, String key) {
+    if (!map.containsKey(key)) {
+      map[key] = 0;
+      return;
+    }
+
+    final value = map[key];
+    if (value is num) {
+      // Already numeric, no change needed
+      return;
+    }
+
+    if (value is String) {
+      // Try to convert string to number
+      final numericValue = double.tryParse(value);
+      map[key] = numericValue ?? 0;
+      return;
+    }
+
+    if (value is Map) {
+      print('Warning: Found Map where a number was expected for $key: $value');
+      map[key] = 0;
+      return;
+    }
+
+    // For any other type, set to 0
+    print('Warning: Unexpected type ${value.runtimeType} for $key');
+    map[key] = 0;
   }
 
   @override
@@ -293,7 +478,6 @@ class _ProgressPageState extends State<ProgressPage>
                     unselectedLabelColor: Colors.grey,
                     indicatorColor: const Color(0xFF48CAE4),
                     tabs: const [
-                      Tab(text: 'Practice Sessions'),
                       Tab(text: 'Speech Analysis'),
                       Tab(text: 'Progress Charts'),
                     ],
@@ -304,7 +488,6 @@ class _ProgressPageState extends State<ProgressPage>
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildPracticeSessionsTab(),
                       _buildSpeechAnalysisTab(),
                       _buildProgressChartsTab(),
                     ],
@@ -318,7 +501,7 @@ class _ProgressPageState extends State<ProgressPage>
     );
   }
 
-  Widget _buildPracticeSessionsTab() {
+  Widget _buildSpeechAnalysisTab() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -341,511 +524,488 @@ class _ProgressPageState extends State<ProgressPage>
     );
   }
 
-  Widget _buildSpeechAnalysisTab() {
+  Widget _buildProgressChartsTab() {
     if (_speechAnalysisLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Create a user-friendly message if no data is available
     if (_speechSessions.isEmpty) {
-      return const Center(child: Text('No speech sessions found'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bar_chart,
+                size: 80, color: Colors.grey.withOpacity(0.5)),
+            const SizedBox(height: 16),
+            const Text(
+              'No speech data available yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Complete speech sessions to see your progress here',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
     }
 
-    return Column(
-      children: [
-        // Show warning banner if using mock data
-        if (_speechAnalysisError.isNotEmpty)
+    // Process data for charts
+    final List<FlSpot> overallScoreSpots = [];
+    final List<FlSpot> confidenceSpots = [];
+    final List<FlSpot> claritySpots = [];
+    final List<String> dates = [];
+
+    // Process real session data
+    List<Map<String, dynamic>> chartData = [];
+
+    // Extract and format the data from _speechSessions
+    chartData = _speechSessions.map<Map<String, dynamic>>((session) {
+      DateTime date;
+      try {
+        date = session['timestamp'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(
+                session['timestamp']['_seconds'] * 1000)
+            : DateTime.now();
+      } catch (e) {
+        date = DateTime.now();
+      }
+
+      // Extract metrics from the session
+      final metrics = session['metrics'] ?? {};
+
+      return {
+        'date': date,
+        'overallScore': metrics['overallScore'] ?? 0,
+        'confidenceScore': metrics['confidenceScore'] ?? 0,
+        'clarityScore': metrics['clarityScore'] ?? 0,
+        'fluencyScore': metrics['fluencyScore'] ?? 0,
+      };
+    }).toList();
+
+    // Sort data by date
+    chartData.sort(
+        (a, b) => (a['date'] as DateTime).compareTo(b['date'] as DateTime));
+
+    // Process chart data
+    for (var i = 0; i < chartData.length; i++) {
+      overallScoreSpots.add(FlSpot(
+          i.toDouble(), (chartData[i]['overallScore'] as num).toDouble()));
+      confidenceSpots.add(FlSpot(
+          i.toDouble(), (chartData[i]['confidenceScore'] as num).toDouble()));
+      claritySpots.add(FlSpot(
+          i.toDouble(), (chartData[i]['clarityScore'] as num).toDouble()));
+      dates.add(DateFormat('MM/dd').format(chartData[i]['date'] as DateTime));
+    }
+
+    // Calculate improvement metrics
+    final startOverallScore = chartData.isNotEmpty
+        ? (chartData.first['overallScore'] as num).toDouble()
+        : 0;
+    final latestOverallScore = chartData.isNotEmpty
+        ? (chartData.last['overallScore'] as num).toDouble()
+        : 0;
+    final improvement = startOverallScore > 0
+        ? ((latestOverallScore - startOverallScore) / startOverallScore) * 100
+        : 0;
+
+    // Average scores calculation
+    final avgOverallScore = chartData.isEmpty
+        ? 0.0
+        : chartData
+                .map((item) => item['overallScore'] as num)
+                .reduce((a, b) => a + b) /
+            chartData.length;
+    final avgConfidence = chartData.isEmpty
+        ? 0.0
+        : chartData
+                .map((item) => item['confidenceScore'] as num)
+                .reduce((a, b) => a + b) /
+            chartData.length;
+    final avgClarity = chartData.isEmpty
+        ? 0.0
+        : chartData
+                .map((item) => item['clarityScore'] as num)
+                .reduce((a, b) => a + b) /
+            chartData.length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Progress Summary Card
           Container(
-            width: double.infinity,
-            margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.amber.shade100,
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline, color: Colors.amber),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _speechAnalysisError.contains('http')
-                      ? GestureDetector(
-                          onTap: () {
-                            final urlMatch = RegExp(r'(https?://[^\s]+)')
-                                .firstMatch(_speechAnalysisError);
-                            if (urlMatch != null) {
-                              _launchURL(urlMatch.group(0)!);
-                            }
-                          },
-                          child: Text(
-                            _speechAnalysisError,
-                            style: TextStyle(
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          _speechAnalysisError,
-                          style: TextStyle(color: Colors.amber.shade900),
-                        ),
+                Text(
+                  'Speech Progress Summary',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildProgressMetric(
+                        'Overall Score', avgOverallScore.round(), Colors.blue),
+                    _buildProgressMetric('Improvement', improvement.round(),
+                        improvement >= 0 ? Colors.green : Colors.red),
+                    _buildProgressMetric(
+                        'Sessions', chartData.length, Colors.purple),
+                  ],
                 ),
               ],
             ),
           ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _speechSessions.length,
-            itemBuilder: (context, index) {
-              final session = _speechSessions[index];
-              final timestamp = session['timestamp'] != null
-                  ? DateTime.fromMillisecondsSinceEpoch(
-                      session['timestamp']['_seconds'] * 1000)
-                  : DateTime.now();
-              final formattedDate =
-                  DateFormat('MMM d, yyyy - h:mm a').format(timestamp);
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+          const SizedBox(height: 24),
+
+          // Overall Score Line Chart
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
                 ),
-                child: InkWell(
-                  onTap: () => _navigateToSessionDetails(session),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              formattedDate,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                            _buildScoreChip(
-                                session['analysis']['overallScore']),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _truncateText(session['transcript'], 100),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            height: 1.5,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Overall Speech Score Trend',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 200,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(show: false),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            getTitlesWidget: (value, meta) {
+                              return Text(
+                                value.toInt().toString(),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildMetricColumn('Confidence',
-                                session['analysis']['confidenceScore']),
-                            _buildMetricColumn(
-                                'Grammar', session['analysis']['grammarScore']),
-                            _buildMetricColumn(
-                                'Clarity', session['analysis']['clarityScore']),
-                          ],
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              if (value.toInt() >= 0 &&
+                                  value.toInt() < dates.length) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    dates[value.toInt()],
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
+                                );
+                              }
+                              return const SizedBox();
+                            },
+                          ),
+                        ),
+                        rightTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        topTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      borderData: FlBorderData(
+                          show: true,
+                          border: Border.all(color: const Color(0xFFDDDDDD))),
+                      minX: 0,
+                      maxX: (overallScoreSpots.length - 1).toDouble(),
+                      minY: 0,
+                      maxY: 100,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: overallScoreSpots,
+                          isCurved: true,
+                          color: Colors.blue,
+                          barWidth: 3,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(show: true),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: Colors.blue.withOpacity(0.1),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProgressChartsTab() {
-    if (_progressData.isEmpty) {
-      return const Center(child: Text('No progress data available'));
-    }
-
-    return Column(
-      children: [
-        // Show warning banner if using mock data
-        if (_usingMockProgressData)
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.amber.shade100,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline, color: Colors.amber),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Using sample progress data - database connection unavailable',
-                    style: TextStyle(color: Colors.amber.shade900),
-                  ),
-                ),
               ],
             ),
           ),
-        Expanded(
-          child: SingleChildScrollView(
+
+          const SizedBox(height: 24),
+
+          // Metrics Comparison Chart
+          Container(
             padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Your Speaking Progress',
+                Text(
+                  'Speech Metrics Comparison',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 200,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(show: false),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            getTitlesWidget: (value, meta) {
+                              return Text(
+                                value.toInt().toString(),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            },
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              if (value.toInt() >= 0 &&
+                                  value.toInt() < dates.length) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    dates[value.toInt()],
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
+                                );
+                              }
+                              return const SizedBox();
+                            },
+                          ),
+                        ),
+                        rightTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        topTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
                       ),
-                    ],
+                      borderData: FlBorderData(
+                          show: true,
+                          border: Border.all(color: const Color(0xFFDDDDDD))),
+                      minX: 0,
+                      maxX: (overallScoreSpots.length - 1).toDouble(),
+                      minY: 0,
+                      maxY: 100,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: confidenceSpots,
+                          isCurved: true,
+                          color: Colors.green,
+                          barWidth: 3,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(show: true),
+                        ),
+                        LineChartBarData(
+                          spots: claritySpots,
+                          isCurved: true,
+                          color: Colors.orange,
+                          barWidth: 3,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(show: true),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: _buildProgressChart(),
                 ),
-                const SizedBox(height: 32),
-                _buildRecentMetrics(),
+                const SizedBox(height: 12),
+                // Chart Legend
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildChartLegend('Confidence', Colors.green),
+                    const SizedBox(width: 24),
+                    _buildChartLegend('Clarity', Colors.orange),
+                  ],
+                ),
               ],
             ),
           ),
-        ),
-      ],
+
+          const SizedBox(height: 24),
+
+          // Detailed Metrics Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Average Speech Metrics',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildMetricProgressBar(
+                    'Overall Score', avgOverallScore, Colors.blue),
+                const SizedBox(height: 12),
+                _buildMetricProgressBar(
+                    'Confidence', avgConfidence, Colors.green),
+                const SizedBox(height: 12),
+                _buildMetricProgressBar('Clarity', avgClarity, Colors.orange),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildScoreChip(int score) {
-    Color color;
-    if (score >= 80) {
-      color = Colors.green;
-    } else if (score >= 60) {
-      color = Colors.orange;
-    } else {
-      color = Colors.red;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        '$score',
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricColumn(String label, int value) {
-    Color color;
-    if (value >= 80) {
-      color = Colors.green;
-    } else if (value >= 60) {
-      color = Colors.orange;
-    } else {
-      color = Colors.red;
-    }
-
+  Widget _buildProgressMetric(String label, int value, Color color) {
     return Column(
       children: [
         Text(
           label,
           style: TextStyle(
+            fontSize: 14,
             color: Colors.grey[600],
-            fontSize: 12,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Text(
-          '$value',
+          label == 'Improvement' ? '${value > 0 ? '+' : ''}$value%' : '$value',
           style: TextStyle(
-            color: color,
-            fontSize: 18,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
+            color: color,
           ),
         ),
       ],
     );
   }
 
-  void _navigateToSessionDetails(dynamic session) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SpeechSessionDetailsPage(
-          session: session,
-          displayMode: SpeechSessionDisplayMode.fullScreen,
-        ),
-      ),
-    );
-  }
-
-  String _truncateText(String text, int maxLength) {
-    if (text.length <= maxLength) return text;
-    return '${text.substring(0, maxLength)}...';
-  }
-
-  Widget _buildProgressChart() {
-    if (_progressData.length < 2) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text('Not enough data to show progress chart'),
-        ),
-      );
-    }
-
-    return Container(
-      height: 300,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
+  Widget _buildChartLegend(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
           ),
-        ],
-      ),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    value.toInt().toString(),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
-                  );
-                },
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 30,
-                getTitlesWidget: (value, meta) {
-                  if (value.toInt() >= 0 &&
-                      value.toInt() < _progressData.length) {
-                    final timestamp = DateTime.fromMillisecondsSinceEpoch(
-                        _progressData[value.toInt()]['timestamp']['_seconds'] *
-                            1000);
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        DateFormat('MM/dd').format(timestamp),
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
-                    );
-                  }
-                  return const Text('');
-                },
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          minX: 0,
-          maxX: _progressData.length.toDouble() - 1,
-          minY: 0,
-          maxY: 100,
-          lineBarsData: [
-            _buildLineChartBarData('overallScore', Colors.blue),
-            _buildLineChartBarData('confidenceScore', Colors.green),
-            _buildLineChartBarData('grammarScore', Colors.orange),
-            _buildLineChartBarData('clarityScore', Colors.purple),
-          ],
         ),
-      ),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+      ],
     );
   }
 
-  LineChartBarData _buildLineChartBarData(String metric, Color color) {
-    final spots = <FlSpot>[];
-
-    for (int i = 0; i < _progressData.length; i++) {
-      spots.add(FlSpot(i.toDouble(), _progressData[i][metric].toDouble()));
-    }
-
-    return LineChartBarData(
-      spots: spots,
-      isCurved: true,
-      color: color,
-      barWidth: 3,
-      isStrokeCapRound: true,
-      dotData: FlDotData(show: true),
-      belowBarData: BarAreaData(
-        show: true,
-        color: color.withOpacity(0.1),
-      ),
-    );
-  }
-
-  Widget _buildRecentMetrics() {
-    if (_progressData.isEmpty) return const SizedBox.shrink();
-
-    final latestSession = _progressData.last;
-
+  Widget _buildMetricProgressBar(String label, double value, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Latest Performance',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+            Text(
+              '${value.toInt()}/100',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: value / 100,
+            backgroundColor: Colors.grey.withOpacity(0.2),
+            color: color,
+            minHeight: 10,
           ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                'Overall Score',
-                latestSession['overallScore'],
-                Icons.star,
-                Colors.amber,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildMetricCard(
-                'Speech Rate',
-                latestSession['speechRate'],
-                Icons.speed,
-                Colors.blue,
-                suffix: 'WPM',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                'Confidence',
-                latestSession['confidenceScore'],
-                Icons.psychology,
-                Colors.green,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildMetricCard(
-                'Grammar',
-                latestSession['grammarScore'],
-                Icons.spellcheck,
-                Colors.orange,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildMetricCard(
-          'Clarity',
-          latestSession['clarityScore'],
-          Icons.record_voice_over,
-          Colors.purple,
-          fullWidth: true,
         ),
       ],
-    );
-  }
-
-  Widget _buildMetricCard(
-      String title, dynamic value, IconData icon, Color color,
-      {String suffix = '', bool fullWidth = false}) {
-    return Container(
-      width: fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: const Color(0xFF48CAE4), size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value is int
-                ? '$value$suffix'
-                : '${value.toStringAsFixed(1)}$suffix',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1047,8 +1207,21 @@ class _ProgressPageState extends State<ProgressPage>
     );
   }
 
-  // Helper method to get color based on metric score
-  Color _getMetricColor(double score) {
+  // Helper method for color coding metric scores
+  Color _getMetricColor(dynamic scoreValue) {
+    // Safely convert the input to a double
+    double score = 0.0;
+
+    if (scoreValue is num) {
+      score = scoreValue.toDouble();
+    } else if (scoreValue is String) {
+      score = double.tryParse(scoreValue) ?? 0.0;
+    } else if (scoreValue is Map) {
+      // If a Map was passed instead of a numeric value, use default
+      score = 0.0;
+      print('Warning: Received Map instead of number for metric color');
+    }
+
     if (score >= 80) return Colors.green;
     if (score >= 60) return Colors.amber;
     if (score >= 40) return Colors.orange;
@@ -1061,6 +1234,41 @@ class _ProgressPageState extends State<ProgressPage>
     if (!await url_launcher.launchUrl(url)) {
       print('Could not launch $url');
     }
+  }
+
+  // Helper method to safely extract score values
+  int _getScoreValueSafely(dynamic value) {
+    if (value == null) return 0;
+
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+
+    // Handle Map case that's causing the error
+    if (value is Map) {
+      print('Warning: Received Map instead of int for score: $value');
+      return 0;
+    }
+
+    print('Warning: Unknown type for score: ${value.runtimeType}');
+    return 0;
+  }
+
+  // Helper method to display an error card when a session can't be rendered
+  Widget _buildErrorSessionCard(String errorMessage) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        errorMessage,
+        style: const TextStyle(color: Colors.red),
+      ),
+    );
   }
 }
 
@@ -1120,7 +1328,20 @@ class SpeechSessionDetails extends StatelessWidget {
   }) : super(key: key);
 
   // Helper method for color coding metric scores
-  Color _getMetricColor(double score) {
+  Color _getMetricColor(dynamic scoreValue) {
+    // Safely convert the input to a double
+    double score = 0.0;
+
+    if (scoreValue is num) {
+      score = scoreValue.toDouble();
+    } else if (scoreValue is String) {
+      score = double.tryParse(scoreValue) ?? 0.0;
+    } else if (scoreValue is Map) {
+      // If a Map was passed instead of a numeric value, use default
+      score = 0.0;
+      print('Warning: Received Map instead of number for metric color');
+    }
+
     if (score >= 80) return Colors.green;
     if (score >= 60) return Colors.amber;
     if (score >= 40) return Colors.orange;
@@ -1733,10 +1954,21 @@ class SpeechSessionDetails extends StatelessWidget {
   }
 
   Widget _buildScoreRow(String label, dynamic scoreValue) {
-    // Convert dynamic score to double safely
-    final score = scoreValue is num ? scoreValue.toDouble() : 0.0;
-    final scoreInt = score.toInt();
+    // More robust conversion of dynamic score to double
+    double score = 0.0;
 
+    // Handle different types that might come from the server
+    if (scoreValue is num) {
+      score = scoreValue.toDouble();
+    } else if (scoreValue is String) {
+      score = double.tryParse(scoreValue) ?? 0.0;
+    } else if (scoreValue is Map) {
+      // If a Map was passed instead of a numeric value, use default
+      score = 0.0;
+      print('Warning: Received Map instead of number for $label score');
+    }
+
+    final scoreInt = score.toInt();
     Color color = _getScoreColor(score);
 
     return Column(
