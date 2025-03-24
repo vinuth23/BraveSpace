@@ -65,9 +65,6 @@ const IS_SELF_HOSTED_WHISPER = process.env.IS_SELF_HOSTED_WHISPER === 'true';
 const WHISPER_API_URL = process.env.WHISPER_API_URL || 'http://localhost:9000/asr';
 const WHISPER_API_KEY = process.env.WHISPER_API_KEY || '';
 
-console.log('Whisper API URL:', WHISPER_API_URL);
-console.log('Is self-hosted Whisper:', IS_SELF_HOSTED_WHISPER);
-
 const app = express();
 
 // Middleware

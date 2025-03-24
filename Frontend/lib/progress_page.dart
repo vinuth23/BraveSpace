@@ -1229,7 +1229,6 @@ class _ProgressPageState extends State<ProgressPage>
     } else if (scoreValue is Map) {
       // If a Map was passed instead of a numeric value, use default
       score = 0.0;
-      print('Warning: Received Map instead of number for metric color');
     }
 
     if (score >= 80) return Colors.green;
@@ -1254,10 +1253,6 @@ class _ProgressPageState extends State<ProgressPage>
 
     // Extract metrics instead of analysis
     final metrics = processedSession['metrics'] as Map<String, dynamic>? ?? {};
-    print('METRICS: $metrics');
-    print('METRICS KEYS: ${metrics.keys.toList()}');
-    print('OVERALL SCORE: ${metrics['overallScore']}');
-    print('CONFIDENCE SCORE: ${metrics['confidenceScore']}');
 
     final speechText =
         processedSession['speechText'] as String? ?? 'No speech text available';
@@ -1306,7 +1301,6 @@ class SpeechSessionDetailsPage extends StatelessWidget {
     } else if (scoreValue is Map) {
       // If a Map was passed instead of a numeric value, use default
       score = 0.0;
-      print('Warning: Received Map instead of number for metric color');
     }
 
     if (score >= 80) return Colors.green;
@@ -1322,13 +1316,9 @@ class SpeechSessionDetailsPage extends StatelessWidget {
     if (session is Map) {
       // Convert any Map<dynamic, dynamic> to Map<String, dynamic>
       processedSession = _convertToStringMap(session as Map);
-      // Add debug logging
-      print('SESSION DATA (Map): ${json.encode(processedSession)}');
     } else {
       // If it's a SpeechSession, convert it to a Map<String, dynamic>
       processedSession = (session as SpeechSession).toJson();
-      // Add debug logging
-      print('SESSION DATA (SpeechSession): ${json.encode(processedSession)}');
     }
 
     // Parse timestamp
@@ -1353,16 +1343,11 @@ class SpeechSessionDetailsPage extends StatelessWidget {
         sessionDate = DateTime.now();
       }
     } catch (e) {
-      print('Error parsing timestamp: $e');
       sessionDate = DateTime.now();
     }
 
     // Extract metrics instead of analysis
     final metrics = processedSession['metrics'] as Map<String, dynamic>? ?? {};
-    print('METRICS: $metrics');
-    print('METRICS KEYS: ${metrics.keys.toList()}');
-    print('OVERALL SCORE: ${metrics['overallScore']}');
-    print('CONFIDENCE SCORE: ${metrics['confidenceScore']}');
 
     final speechText =
         processedSession['speechText'] as String? ?? 'No speech text available';

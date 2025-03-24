@@ -177,77 +177,81 @@ class SpeechSessionService {
     }
   }
 
-  // Save a session to both local storage and server
-  Future<bool> saveSession(SpeechSession session) async {
+  // Save session to the server and Firestore
+  Future<void> saveSession(SpeechSession session) async {
     try {
-      // Save to local storage first
-      await _saveLocalSession(session);
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not logged in');
+      }
 
-      // Try to save to server if user is authenticated
-      if (_auth.currentUser != null) {
-        try {
-          final token = await _auth.currentUser!.getIdToken();
-          final response = await http.post(
-            Uri.parse('$_baseUrl/speech-sessions'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: json.encode({
-              'topic': session.topic,
-              'speechText': session.speechText,
-              'metrics': session.metrics,
-              'duration': session.duration,
-              'feedback': session.feedback,
-            }),
-          );
+      // Get the auth token
+      final token = await user.getIdToken();
 
-          if (response.statusCode == 200) {
-            print('Speech session saved to server successfully');
-          } else {
-            print('Failed to save speech session to server: ${response.body}');
-          }
-        } catch (e) {
-          print('Error saving session to server: $e');
-          // Continue anyway as we've saved to local storage
+      // Send to the server
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/speech-sessions'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({
+            'userId': session.userId,
+            'topic': session.topic,
+            'speechText': session.speechText,
+            'metrics': session.metrics,
+            'duration': session.duration,
+            'feedback': session.feedback,
+          }),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Save a local copy to Firestore as well
+          await FirebaseFirestore.instance
+              .collection('speech_sessions')
+              .doc(session.id)
+              .set({
+            'userId': session.userId,
+            'timestamp': FieldValue.serverTimestamp(),
+            'topic': session.topic,
+            'speechText': session.speechText,
+            'metrics': session.metrics,
+            'duration': session.duration,
+            'feedback': session.feedback,
+          });
+        } else {
+          throw Exception('Failed to save session to server');
         }
+      } catch (e) {
+        // If server call fails, at least try to save locally
+        await FirebaseFirestore.instance
+            .collection('speech_sessions')
+            .doc(session.id)
+            .set({
+          'userId': session.userId,
+          'timestamp': FieldValue.serverTimestamp(),
+          'topic': session.topic,
+          'speechText': session.speechText,
+          'metrics': session.metrics,
+          'duration': session.duration,
+          'feedback': session.feedback,
+        });
       }
 
-      return true;
-    } catch (e) {
-      print('Error in saveSession: $e');
-      return false;
-    }
-  }
-
-  // Save session to local storage
-  Future<void> _saveLocalSession(SpeechSession session) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      // Get existing sessions
-      final sessionsJson = prefs.getStringList('speech_sessions') ?? [];
-      final sessions = sessionsJson
-          .map((json) => SpeechSession.fromJson(jsonDecode(json)))
-          .toList();
-
-      // Add new session
-      sessions.add(session);
-
-      // Keep only the most recent 20 sessions
-      if (sessions.length > 20) {
-        sessions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-        sessions.removeRange(20, sessions.length);
+      // Also save to local storage for offline access
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final existingSessions =
+            prefs.getStringList('speech_sessions') ?? <String>[];
+        existingSessions.add(json.encode(session.toJson()));
+        await prefs.setStringList('speech_sessions', existingSessions);
+      } catch (e) {
+        // Silently fail on local storage
       }
-
-      // Save back to preferences
-      final updatedSessionsJson =
-          sessions.map((session) => jsonEncode(session.toJson())).toList();
-
-      await prefs.setStringList('speech_sessions', updatedSessionsJson);
     } catch (e) {
-      print('Error saving to local storage: $e');
-      throw e;
+      // If all else fails, just log the error
+      throw Exception('Failed to save session: $e');
     }
   }
 

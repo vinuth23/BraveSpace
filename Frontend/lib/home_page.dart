@@ -40,7 +40,6 @@ class HomePageState extends State<HomePage> {
 
         final userData =
             await _firestore.collection('users').doc(user.uid).get();
-        print('User data: ${userData.data()}');
         final firstName = userData.data()?['firstName'] ?? '';
 
         // Get challenges without date filter
@@ -50,30 +49,12 @@ class HomePageState extends State<HomePage> {
             .where('userId', isEqualTo: user.uid)
             .get();
 
-        print('Found ${challengesSnapshot.docs.length} challenges');
-        if (challengesSnapshot.docs.isEmpty) {
-          print('No challenges found for user');
-        } else {
-          for (var doc in challengesSnapshot.docs) {
-            print('Challenge data: ${doc.data()}');
-          }
-        }
-
         // Get upcoming sessions
         print('Fetching sessions...');
         final sessionsSnapshot = await _firestore
             .collection('sessions')
             .where('userId', isEqualTo: user.uid)
             .get(); // Remove time filter temporarily
-
-        print('Found ${sessionsSnapshot.docs.length} sessions');
-        if (sessionsSnapshot.docs.isEmpty) {
-          print('No sessions found for user');
-        } else {
-          for (var doc in sessionsSnapshot.docs) {
-            print('Session data: ${doc.data()}');
-          }
-        }
 
         final challenges = challengesSnapshot.docs
             .map((doc) => Challenge.fromFirestore(doc))
@@ -96,7 +77,6 @@ class HomePageState extends State<HomePage> {
         print('Loaded ${_upcomingSessions.length} sessions');
       }
     } catch (e) {
-      print('Error loading user data: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -262,18 +242,16 @@ class HomePageState extends State<HomePage> {
                           ],
                         ),
                         const SizedBox(height: 15),
-                        ..._upcomingSessions
-                            .map((session) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 15),
-                                  child: _SessionCard(
-                                    title: session.title,
-                                    duration: session.duration,
-                                    time: session.formattedTime,
-                                    onTap: () {},
-                                    color: const Color(0xFF48CAE4),
-                                  ),
-                                ))
-                            ,
+                        ..._upcomingSessions.map((session) => Padding(
+                              padding: const EdgeInsets.only(bottom: 15),
+                              child: _SessionCard(
+                                title: session.title,
+                                duration: session.duration,
+                                time: session.formattedTime,
+                                onTap: () {},
+                                color: const Color(0xFF48CAE4),
+                              ),
+                            )),
                       ],
                     ),
                   ),

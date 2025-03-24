@@ -449,14 +449,11 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
       _error = null;
     });
 
-    print('DEBUG: Starting to load sessions for child ID: ${widget.childId}');
-
     try {
       // First, let's check if the child document exists
       final userDoc =
           await _firestore.collection('users').doc(widget.childId).get();
       if (!userDoc.exists) {
-        print('ERROR: Child document does not exist');
         setState(() {
           _error = 'Child user document not found';
           _isLoading = false;
@@ -464,14 +461,11 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
         return;
       }
 
-      print('DEBUG: Child document exists');
-
       final List<Map<String, dynamic>> allSessions = [];
 
       // We need to get the auth token for API requests
       final token = await _auth.currentUser?.getIdToken();
       if (token == null) {
-        print('ERROR: Could not get auth token');
         setState(() {
           _error = 'Authentication error';
           _isLoading = false;
@@ -481,8 +475,6 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
 
       // Try to get VR sessions from the API
       try {
-        print('DEBUG: Attempting to fetch VR sessions from API');
-
         final response = await http.get(
           Uri.parse('$baseUrl/api/therapist/child-progress/${widget.childId}'),
           headers: {
@@ -491,19 +483,12 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
           },
         );
 
-        print('DEBUG: API response status: ${response.statusCode}');
-        print('DEBUG: API response body: ${response.body}');
-
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          print(
-              'DEBUG: API response data: ${data.toString().substring(0, math.min(100, data.toString().length))}...');
 
           // Process all sessions from the API response
           if (data.containsKey('progress') && data['progress'] is List) {
             final progressData = data['progress'] as List;
-            print(
-                'DEBUG: Found ${progressData.length} total sessions from API');
 
             for (final session in progressData) {
               // Check if this is a VR session based on fields
@@ -557,41 +542,21 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
                 });
               }
             }
-          } else {
-            print(
-                'DEBUG: No progress data found in API response or incorrect format');
-          }
-        } else {
-          print(
-              'ERROR: Failed to fetch sessions from API: ${response.statusCode}');
-          print('ERROR: Response body: ${response.body}');
-
-          // If we get a 500 error, it's likely due to missing relationship
-          if (response.statusCode == 500) {
-            print(
-                'ERROR: Likely missing therapist-child relationship. Going to fallback method.');
           }
         }
       } catch (e) {
-        print('ERROR: Error fetching sessions from API: $e');
+        print('Error fetching sessions from API: $e');
       }
 
       // If API call failed or returned no sessions, try direct Firestore approach
       if (allSessions.isEmpty) {
-        print(
-            'DEBUG: API didn\'t return sessions, using direct Firestore queries');
-
         // Try the speech_analysis collection first - this should always work regardless of relationships
         try {
-          print('DEBUG: Querying speech_analysis collection directly');
           final speechAnalysisSnapshot = await _firestore
               .collection('speech_analysis')
               .where('userId', isEqualTo: widget.childId)
               .orderBy('timestamp', descending: true)
               .get();
-
-          print(
-              'DEBUG: Found ${speechAnalysisSnapshot.docs.length} speech analysis sessions');
 
           for (final doc in speechAnalysisSnapshot.docs) {
             final data = doc.data();
@@ -639,15 +604,11 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
         // Try other collections as before (VR sessions and speech_sessions)
         // First get VR sessions
         try {
-          print('DEBUG: Trying direct Firestore for VR sessions as fallback');
           final vrSessionsSnapshot = await _firestore
               .collection('user_sessions') // Use the correct collection
               .where('userId', isEqualTo: widget.childId)
               .orderBy('timestamp', descending: true)
               .get();
-
-          print(
-              'DEBUG: Found ${vrSessionsSnapshot.docs.length} VR sessions from Firestore');
 
           for (final doc in vrSessionsSnapshot.docs) {
             final data = doc.data();
@@ -672,16 +633,11 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
 
         // Now try speech sessions in Firestore as fallback
         try {
-          print(
-              'DEBUG: Trying direct Firestore for speech sessions as fallback');
           final speechSessionsSnapshot = await _firestore
               .collection('speech_sessions') // Use the correct collection
               .where('userId', isEqualTo: widget.childId)
               .orderBy('timestamp', descending: true)
               .get();
-
-          print(
-              'DEBUG: Found ${speechSessionsSnapshot.docs.length} speech sessions from Firestore');
 
           for (final doc in speechSessionsSnapshot.docs) {
             final data = doc.data();
@@ -719,8 +675,6 @@ class _ChildSessionsPageState extends State<ChildSessionsPage> {
       // Sort all sessions by timestamp (newest first)
       allSessions.sort((a, b) =>
           (b['timestamp'] as DateTime).compareTo(a['timestamp'] as DateTime));
-
-      print('DEBUG: Total sessions found: ${allSessions.length}');
 
       setState(() {
         _sessions = allSessions;

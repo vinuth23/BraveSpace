@@ -29,7 +29,6 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      print('Attempting login...');
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
@@ -54,14 +53,10 @@ class _LoginPageState extends State<LoginPage> {
             body: json.encode({'idToken': idToken}),
           );
 
-          print('Backend response status: ${response.statusCode}');
-          print('Backend response body: ${response.body}');
-
           if (response.statusCode != 200) {
             throw Exception(
                 'Backend returned ${response.statusCode}: ${response.body}');
           }
-          print('Token verification successful!');
         } catch (e) {
           print('Backend communication error: $e');
           throw Exception('Failed to verify token with backend: $e');
@@ -71,7 +66,6 @@ class _LoginPageState extends State<LoginPage> {
       // Login successful, AuthGate will handle navigation
       return;
     } on FirebaseAuthException catch (e) {
-      print('FirebaseAuthException: ${e.code}');
       String message = 'Authentication failed';
       if (e.code == 'user-not-found') {
         message = 'No user found with this email';
@@ -84,7 +78,6 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } catch (e) {
-      print('Error during login: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('An error occurred during login')),
