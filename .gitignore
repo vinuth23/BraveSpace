@@ -7,6 +7,15 @@ VR/Build/
 VR/Builds/
 VR/UserSettings/
 
+# Ignore Unity auto-generated files in playground folder
+playground/Library/
+playground/Temp/
+playground/Logs/
+playground/Obj/
+playground/Build/
+playground/Builds/
+playground/UserSettings/
+
 # Ignore Node.js dependencies in Backend folder
 Backend/node_modules/
 Backend/npm-debug.log*
